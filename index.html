@@ -125,6 +125,21 @@ window.GH = {
   .chat-input-row { display: flex; gap: 8px; }
   .chat-input-row input { flex: 1; margin: 0; }
   .chat-input-row button { width: auto; padding: 10px 20px; }
+  
+  .cat-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+    font-size: 40px; /* emoji 的大小 */
+  }
+  .cat-icon svg {
+    width: 70px;
+    height:70px;
+    display: block;
+    margin: 0 auto;
+  }
+
 </style>
 </head>
 <body>
@@ -360,28 +375,71 @@ class HuaXiaApp {
           <button class="qa-btn" onclick="app.togglePinyin()" id="pinyin-toggle">👁️ 隐藏拼音</button>
         </div>
         <div class="categories" id="categories"></div>
-        <footer style="text-align:center;padding:30px;color:#888;font-size:13px;">🌟 华夏小课堂 · <a href="admin/" style="color:#5e35b1;">教师后台</a></footer>
+        <footer style="text-align:center;padding:30px;color:#888;font-size:13px;">🌟 华夏小课堂 · <a href="admin/" style="color:#5e35b1;">后台管理</a></footer>
       `;
 
       const wb = document.getElementById('welcome-btn');
       if (wb) wb.onclick = () => { if (window.tts) window.tts.speak('你好小朋友，欢迎来到华夏小课堂！'); };
 
       // 渲染分类
+      const svgGames = `
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect x="2" y="2" width="28" height="28" rx="6" fill="white" opacity="0.25"/>
+              <text x="8" y="22" font-size="18" font-weight="bold" fill="white">文</text>
+              <text x="22" y="10" font-size="10" font-weight="bold" fill="white">A</text>
+              <text x="24" y="18" font-size="10" font-weight="bold" fill="white">O</text>
+              <text x="20" y="26" font-size="10" font-weight="bold" fill="white">E</text>
+            </svg>
+            `;
+      const svgMaths = `
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect x="2" y="2" width="28" height="28" rx="6" fill="white" opacity="0.25"/>
+              <rect x="16" y="6" width="10" height="10" rx="2" fill="white"/>
+              <rect x="6" y="16" width="10" height="10" rx="2" fill="white"/>
+              <rect x="16" y="16" width="6" height="6" rx="2" fill="white"/>
+              <rect x="18" y="18" width="6" height="6" rx="2" fill="white"/>
+              <text x="10" y="14" font-size="12" font-weight="bold" fill="#06B6D4">+</text>
+              <text x="20" y="14" font-size="12" font-weight="bold" fill="#06B6D4">−</text>
+              <text x="10" y="24" font-size="12" font-weight="bold" fill="#06B6D4">×</text>
+              <text x="20" y="24" font-size="12" font-weight="bold" fill="#06B6D4">÷</text>
+            </svg>
+            `;
       const cats = [
         { id: 'festivals', name: '传统节日', icon: '🎊', color: '#e74c3c' },
         { id: 'heroes', name: '历史人物', icon: '🦸', color: '#3498db' },
         { id: 'idioms', name: '成语故事', icon: '📖', color: '#16a085' },
-        { id: 'poems', name: '古诗欣赏', icon: '🖌️', color: '#9b59b6' },
+        { id: 'poems', name: '古诗欣赏', icon: '🖌️', color: '#EC4899' },
         { id: 'inventions', name: '四大发明', icon: '⚙️', color: '#f39c12' },
-        { id: 'food', name: '美食文化', icon: '🥟', color: '#e67e22' }
+        { id: 'food', name: '美食文化', icon: '🥟', color: '#e67e22' },
+        { id: 'games', name: '语文游戏', icon: svgGames, color: '#8B5CF6' },
+        { id: 'maths', name: '数学之窗', icon: svgMaths, color: '#06B6D4' },
       ];
+      // ③ ⭐⭐ 在这里放渲染分类的代码 ⭐⭐
+      /*
+      const categories = document.getElementById('categories');
+      categories.innerHTML = cats.map(cat => `
+        <div class="category-card" style="background:${cat.color};" onclick="app.openCategory('${cat.id}')">
+          <div class="cat-icon">${cat.icon}</div>
+          <div class="cat-name">${cat.name}</div>
+        </div>
+      `).join('');
+      */
+      // ③ 渲染分类卡片（同时支持 SVG / emoji + 点击）
       const cc = document.getElementById('categories');
       if (cc) {
+        cc.innerHTML = ''; // 先清空，避免重复
+        
         cats.forEach(c => {
           const card = document.createElement('div');
           card.className = 'category-card';
           card.style.background = c.color;
-          card.innerHTML = `<div class="icon">${c.icon}</div><h3>${c.name}</h3>`;
+          
+          //card.innerHTML = `<div class="icon">${c.icon}</div><h3>${c.name}</h3>`;
+          // 用 cat-icon + cat-name，统一结构，方便加样式
+          card.innerHTML = `
+            <div class="cat-icon">${c.icon}</div>
+            <div class="cat-name">${c.name}</div>
+          `;
           card.onclick = () => this.renderCategory(c);
           cc.appendChild(card);
         });
