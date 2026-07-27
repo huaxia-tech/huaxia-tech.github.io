@@ -10,7 +10,7 @@
 
   // 延迟 1 秒，确保页面加载完成
   setTimeout(() => {
-    fetch('https://huaxia-tech.vercel.app/api/record-visit', {
+    fetch('https://huaxia-tech-github-io.vercel.app/api/record-visit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
