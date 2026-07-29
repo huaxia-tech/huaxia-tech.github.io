@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>华夏小书房 · 第1篇</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="reading.css">
+</head>
+<body>
+
+<script>
+  const ARTICLE_ID = 'reading_0001';  // ← 每篇文章唯一 ID
+</script>
+
+<div class="article-header">
+  <h1 id="article-title">数学里的故事</h1>
+
+  <div class="article-actions">
+    <button id="btnRead">🔊 AI朗读本页</button>
+    <button id="btnStop">⏹ 停止朗读</button>
+  </div>
+</div>
+
+<!-- 阅读进度条 -->
+<div class="progress-bar">
+  <div id="progress-inner"></div>
+</div>
+
+<!-- 正文内容（自动分页） -->
+<article id="articleContent" class="article-content">
+  <p>在很久很久以前，数学并不是考试题，而是人类理解世界的语言。</p>
+  <p>人们用数学描述星空、河流、建筑、贸易，甚至人与人之间的关系。</p>
+  <p>数学是一种故事，一种逻辑的故事，一种世界如何运作的故事。</p>
+  <p>后来，数学变成了考试题，但它的本质从未改变。</p>
+  <p>它依然是人类最古老、最深刻的语言之一。</p>
+  <p>当我们重新用“故事”的方式理解数学，它就变得不再枯燥。</p>
+  <p>它变成了一个个有趣的谜题，一段段优雅的推理。</p>
+  <p>数学不是难，而是美。</p>
+</article>
+
+<!-- 翻页按钮 -->
+<div class="pager">
+  <button id="prevPage">⬅ 上一页</button>
+  <span id="pageInfo"></span>
+  <button id="nextPage">下一页 ➡</button>
+</div>
+
+<script src="reading.js"></script>
+</body>
+</html>

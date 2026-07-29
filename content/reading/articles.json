@@ -1,0 +1,14 @@
+[
+  {
+    "id": "reading_0001",
+    "title": "数学里的故事",
+    "desc": "从考试题回到语言本身，看看数学是怎么讲故事的。",
+    "cover": "covers/math_story.jpg"
+  },
+  {
+    "id": "reading_0002",
+    "title": "成语背后的智慧",
+    "desc": "成语不是死记硬背，而是中国人的思维方式。",
+    "cover": "cover2.jpg"
+  }
+]
