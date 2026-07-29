@@ -49,6 +49,50 @@ window.GH = {
 </script>
 
 <style>
+.top-nav {
+  width: 100%;
+  background: #1F2937;
+  color: #fff;
+  padding: 10px 0;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.nav-inner {
+  max-width: 900px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.nav-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-links li a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.nav-links li a:hover {
+  opacity: 1;
+}
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #fff8e7; min-height: 100vh; }
   .home-header { background: linear-gradient(135deg, #c0392b, #8e24aa); color: white; padding: 40px 20px 30px; text-align: center; }
@@ -143,6 +187,17 @@ window.GH = {
 </style>
 </head>
 <body>
+<nav class="top-nav">
+  <div class="nav-inner">
+    <span class="nav-title">🏮 华夏小课堂</span>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="content/reading/reading_index.html">📚 华夏小书房</a></li>
+      <li><a href="content/maths/maths_index.html">🧮 数学之窗</a></li>
+      <li><a href="content/idioms/idioms_index.html">📖 成语故事</a></li>
+    </ul>
+  </div>
+</nav>
 <!-- ✨ 不显示"加载中"，默认就显示完整首页 -->
 <div id="app">
   <div class="home-header">
