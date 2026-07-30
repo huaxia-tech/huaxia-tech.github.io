@@ -171,6 +171,54 @@ function initFontSize() {
   if (saved) document.documentElement.style.fontSize = saved + "px";
 }
 
+/* ---------------------------------
+   ⭐ 原4. 自动生成封面图（AI）
+--------------------------------- */
+/*
+async function generateCover(title) {
+  const key = 'cover_' + title;
+  const cached = localStorage.getItem(key);
+  if (cached) return cached;
+
+  // 这里你可以换成你自己的 AI 图片 API
+  const res = await fetch("https://image.pollinations.ai/prompt/" + encodeURIComponent(title));
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+
+  localStorage.setItem(key, url);
+  return url;
+}
+*/
+
+async function generateCover(title) {
+  const key = 'cover_' + title;
+  const cached = localStorage.getItem(key);
+  if (cached) return cached;
+
+  // 更稳定的 Pollinations API（加上宽度、高度、风格）
+  const url =
+    "https://image.pollinations.ai/prompt/" +
+    encodeURIComponent(title) +
+    "?width=300&height=420&style=book-cover";
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error("封面生成失败：", res.status);
+      return "fallback.jpg"; // 你可以放一个默认封面
+    }
+
+    const blob = await res.blob();
+    const objectURL = URL.createObjectURL(blob);
+
+    localStorage.setItem(key, objectURL);
+    return objectURL;
+  } catch (err) {
+    console.error("封面生成异常：", err);
+    return "fallback.jpg";
+  }
+}
+
 /* -------------------------
    7. 阅读进度条
 ------------------------- */
