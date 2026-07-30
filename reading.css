@@ -1,0 +1,129 @@
+/* 文章头部 */
+.article-header {
+  text-align: center;
+  padding: 20px;
+}
+
+.article-actions button {
+  margin: 6px;
+  padding: 8px 14px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  background: #3B82F6;
+  color: white;
+}
+
+/* 正文 */
+.article-content {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  line-height: 1.8;
+  font-size: 17px;
+}
+
+/* 翻页按钮 */
+.pager {
+  max-width: 900px;
+  margin: 20px auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pager button {
+  padding: 8px 16px;
+  font-size: 15px;
+  border: none;
+  border-radius: 6px;
+  background: #1F2937;
+  color: white;
+}
+
+/* 阅读进度条 */
+.progress-bar {
+  max-width: 900px;
+  margin: 10px auto;
+  height: 6px;
+  background: #eee;
+  border-radius: 3px;
+}
+
+#progress-inner {
+  height: 100%;
+  width: 0%;
+  background: #3B82F6;
+  border-radius: 3px;
+  transition: width 0.2s;
+}
+
+/* 夜间模式整体背景 */
+body.night {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+/* 夜间模式下的文章内容 */
+body.night .article-content {
+  color: #e2e8f0;
+}
+
+/* 夜间模式下的按钮 */
+body.night button {
+  background: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* 夜间模式下的进度条 */
+body.night #progress-inner {
+  background: #38bdf8 !important;
+}
+
+.page-slide {
+  animation: slideIn 0.25s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* 护眼模式（米黄背景） */
+.body-eye {
+  background: #f5e9c8;
+  color: #333;
+}
+.body-eye .article-content {
+  background: #fdf5dd;
+}
+
+/*  🏅 阅读成就模块 */
+#achievements {
+  margin: 10px 0 20px;
+}
+.badge {
+  display: inline-block;
+  background: #f5e9c8;
+  color: #333;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin: 4px;
+  font-size: 14px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  background: #f5e9c8;
+  color: #333;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin: 4px;
+  font-size: 14px;
+}
+
+.badge::before {
+  content: "🏅";
+  margin-right: 6px;
+}
