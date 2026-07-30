@@ -412,6 +412,7 @@ async function loadArticles() {
       card.className = "book-card";
 
       const cover = "fallback.jpg"; // AI 封面图可接入 generateCover()
+      cover = await generateCover(a.title);
 
       card.innerHTML = `
         <div class="book-cover">
