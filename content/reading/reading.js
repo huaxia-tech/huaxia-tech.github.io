@@ -195,27 +195,22 @@ async function generateCover(title) {
   const cached = localStorage.getItem(key);
   if (cached) return cached;
 
-  const prompt = `Book cover: ${title}`;
-
+  // 更稳定的 Pollinations API（加上宽度、高度、风格）
   const url =
     "https://image.pollinations.ai/prompt/" +
-    encodeURIComponent(prompt) +
-    "?width=300&height=420&model=flux&nologo=true";
+    encodeURIComponent(title) +
+    "?width=300&height=420&style=book-cover";
 
   try {
     const res = await fetch(url);
     if (!res.ok) {
       console.error("封面生成失败：", res.status);
-      return "fallback.jpg";
+      return "fallback.jpg"; // 你可以放一个默认封面
     }
 
     const blob = await res.blob();
-    if (blob.size === 0) {
-      console.error("Pollinations 返回空图");
-      return "fallback.jpg";
-    }
-
     const objectURL = URL.createObjectURL(blob);
+
     localStorage.setItem(key, objectURL);
     return objectURL;
   } catch (err) {
