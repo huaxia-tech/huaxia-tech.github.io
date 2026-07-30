@@ -114,16 +114,18 @@ function initReading() {
    4. 夜间模式
 ------------------------- */
 function initNightMode() {
-  const btn = document.getElementById("toggleNight");
+  const btn = document.getElementById('toggleNight');
   if (!btn) return;
 
   btn.onclick = () => {
-    document.body.classList.toggle("body-night");
-    localStorage.setItem("night_mode", document.body.classList.contains("body-night"));
+    document.body.classList.toggle('night');
+    localStorage.setItem('night_mode', document.body.classList.contains('night'));
   };
 
-  if (localStorage.getItem("night_mode") === "true") {
-    document.body.classList.add("body-night");
+  // 自动恢复夜间模式
+  const saved = localStorage.getItem('night_mode');
+  if (saved === 'true') {
+    document.body.classList.add('night');
   }
 }
 
