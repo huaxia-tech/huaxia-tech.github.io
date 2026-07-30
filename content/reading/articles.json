@@ -10,5 +10,11 @@
     "title": "成语背后的智慧",
     "desc": "成语不是死记硬背，而是中国人的思维方式。",
     "cover": "cover2.jpg"
+  },
+  {
+    "id": "reading_0003",
+    "title": "文字里的温度",
+    "desc": "文字看似冰冷，却能传递温度。",
+    "cover": "cover3.jpg"
   }
 ]
