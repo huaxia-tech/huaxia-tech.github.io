@@ -57,3 +57,34 @@
   border-radius: 3px;
   transition: width 0.2s;
 }
+
+/* 夜间模式整体背景 */
+body.night {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+/* 夜间模式下的文章内容 */
+body.night .article-content {
+  color: #e2e8f0;
+}
+
+/* 夜间模式下的按钮 */
+body.night button {
+  background: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* 夜间模式下的进度条 */
+body.night #progress-inner {
+  background: #38bdf8 !important;
+}
+
+.page-slide {
+  animation: slideIn 0.25s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}

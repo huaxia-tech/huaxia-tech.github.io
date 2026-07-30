@@ -13,20 +13,14 @@
   <p>用文字和声音慢慢读世界</p>
 </div>
 
-<!-- ⭐ 卡片容器 -->
-<div id="book-list" class="book-list">
-  <div class="book-card">
-    <div class="book-cover">
-      <!-- 先不用图片，放个占位色块 -->
-      <div style="width:80px;height:110px;background:#ddd;border-radius:6px;"></div>
-    </div>
-    <div class="book-info">
-      <h2>数学里的故事</h2>
-      <p>从考试题回到语言本身，看看数学是怎么讲故事的。</p>
-      <a href="reading_0001.html">进入阅读</a>
-    </div>
-  </div>
-</div>
+<!-- ⭐ 最近阅读模块（必须放在 book-list 外面） -->
+<h2>📖 最近阅读</h2>
+<div id="recent-list" class="recent-list"></div>
+
+
+<!-- ⭐ 自动生成文章卡片 -->
+<h2>📚 全部文章</h2>
+<div id="book-list" class="book-list"></div>
 
 <!-- ⭐ 自动生成卡片 -->
 <script src="reading.js"></script>
