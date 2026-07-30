@@ -199,7 +199,7 @@ async function generateCover(title) {
   const url =
     "https://image.pollinations.ai/prompt/" +
     encodeURIComponent(title) +
-    "?width=300&height=420&style=book-cover";
+    "?width=240&height=320&style=book-cover";
 
   try {
     const res = await fetch(url);
