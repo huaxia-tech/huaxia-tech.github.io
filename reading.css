@@ -127,3 +127,10 @@ body.night #progress-inner {
   content: "🏅";
   margin-right: 6px;
 }
+
+/*  🏅 每日一句模块 */
+.daily-quote {
+  color: #303fd6;
+  /* font-weight: bold; */
+  background: #fff3cd;
+}
