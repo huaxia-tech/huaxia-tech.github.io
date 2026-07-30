@@ -88,3 +88,26 @@ body.night #progress-inner {
   from { transform: translateX(40px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+/* 护眼模式（米黄背景） */
+.body-eye {
+  background: #f5e9c8;
+  color: #333;
+}
+.body-eye .article-content {
+  background: #fdf5dd;
+}
+
+/*  🏅 阅读成就模块 */
+#achievements {
+  margin: 10px 0 20px;
+}
+.badge {
+  display: inline-block;
+  background: #f5e9c8;
+  color: #333;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin: 4px;
+  font-size: 14px;
+}

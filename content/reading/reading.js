@@ -235,10 +235,18 @@ function loadHistory() {
   const history = JSON.parse(localStorage.getItem('reading_history') || '[]');
 
   history.forEach(h => {
+    const timeKey = `reading_time_${h.id}`;
+    const seconds = Number(localStorage.getItem(timeKey) || 0);
+    const mins = Math.floor(seconds / 60);
+
     const div = document.createElement('div');
     div.className = 'recent-item';
     div.innerHTML = `
-      <p><a href="${h.id}.html">${h.title}</a> · ${new Date(h.time).toLocaleString()}</p>
+      <p>
+        <a href="${h.id}.html">${h.title}</a>
+        · ${new Date(h.time).toLocaleString()}
+        · 阅读约 ${mins} 分钟
+      </p>
     `;
     list.appendChild(div);
   });
@@ -282,6 +290,103 @@ async function loadArticles() {
 
 }
 
+/* -------------------------
+   翻页动画（左右滑动）
+-------------------------- */
+function initSwipePaging() {
+  const article = document.getElementById('articleContent');
+  if (!article) return;
+
+  let startX = 0;
+
+  article.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+  });
+
+  article.addEventListener('touchend', e => {
+    const endX = e.changedTouches[0].clientX;
+    const delta = endX - startX;
+
+    if (Math.abs(delta) < 50) return; // 防误触
+
+    if (delta < 0) {
+      // 左滑 → 下一页
+      const btnNext = document.getElementById('nextPage');
+      btnNext && btnNext.click();
+    } else {
+      // 右滑 → 上一页
+      const btnPrev = document.getElementById('prevPage');
+      btnPrev && btnPrev.click();
+    }
+  });
+}
+
+/* -------------------------
+   护眼模式
+-------------------------- */
+function initEyeMode() {
+  const btn = document.getElementById('toggleEye');
+  if (!btn) return;
+
+  btn.onclick = () => {
+    document.body.classList.toggle('body-eye');
+    localStorage.setItem('eye_mode', document.body.classList.contains('body-eye'));
+  };
+
+  const saved = localStorage.getItem('eye_mode');
+  if (saved === 'true') {
+    document.body.classList.add('body-eye');
+  }
+}
+
+/* -------------------------
+   阅读时长统计
+-------------------------- */
+function initReadingTimer() {
+  if (typeof ARTICLE_ID === 'undefined') return;
+
+  const key = `reading_time_${ARTICLE_ID}`;
+  let seconds = Number(localStorage.getItem(key) || 0);
+
+  setInterval(() => {
+    seconds += 1;
+    localStorage.setItem(key, seconds);
+  }, 1000);
+}
+
+/* -------------------------
+   阅读成就系统（徽章）
+-------------------------- */
+function calcAchievements() {
+  const history = JSON.parse(localStorage.getItem('reading_history') || '[]');
+  const totalArticles = history.length;
+
+  let totalSeconds = 0;
+  history.forEach(h => {
+    const key = `reading_time_${h.id}`;
+    totalSeconds += Number(localStorage.getItem(key) || 0);
+  });
+
+  const badges = [];
+
+  if (totalArticles >= 1) badges.push('📘 入门读者');
+  if (totalArticles >= 5) badges.push('📚 小书房常客');
+  if (totalSeconds >= 60 * 30) badges.push('⏱ 半小时阅读达人');
+  if (totalSeconds >= 60 * 120) badges.push('🏅 深度阅读者');
+
+  localStorage.setItem('reading_badges', JSON.stringify(badges));
+  return badges;
+}
+
+function showAchievements() {
+  const container = document.getElementById('achievements');
+  if (!container) return;
+
+  const badges = JSON.parse(localStorage.getItem('reading_badges') || '[]') || calcAchievements();
+
+  container.innerHTML = badges.map(b => `<span class="badge">${b}</span>`).join(' ');
+}
+
 
 /* -------------------------
    启动所有功能
@@ -292,3 +397,8 @@ initPaging();
 initReading();
 initNightMode();
 initFontSize();
+initSwipePaging();
+initEyeMode();
+initReadingTimer();
+showAchievements();
+
