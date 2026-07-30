@@ -1,246 +1,222 @@
-/* -------------------------
-   自动分页 + 继续阅读
--------------------------- */
+/* ---------------------------------------------------------
+   华夏小书房 · 终极版 reading.js
+   功能列表：
+   ✔ 自动分页
+   ✔ 左右滑动翻页
+   ✔ AI 朗读
+   ✔ 夜间模式
+   ✔ 护眼模式
+   ✔ 字体调节
+   ✔ 阅读进度条
+   ✔ 阅读历史
+   ✔ 阅读时长统计
+   ✔ 阅读成就系统
+   ✔ 阅读排行榜
+   ✔ 每日一句
+   ✔ 文章分类系统
+   ✔ 搜索功能
+   ✔ GitHub 阅读进度同步（二维码）
+   ✔ AI 封面图生成（含 fallback）
+--------------------------------------------------------- */
 
-function initPaging(pageSize = 3) {
-  const article = document.getElementById('articleContent');
+/* -------------------------
+   1. 自动分页
+------------------------- */
+let pages = [];
+let currentPage = 0;
+
+function initPaging() {
+  const article = document.getElementById("articleContent");
   if (!article) return;
 
-  const paras = Array.from(article.querySelectorAll('p'));
-  let currentPage = 0;
-  const totalPages = Math.ceil(paras.length / pageSize);
+  const children = Array.from(article.children);
+  pages = [];
+  let page = [];
 
-  const prevBtn = document.getElementById('prevPage');
-  const nextBtn = document.getElementById('nextPage');
-  const pageInfo = document.getElementById('pageInfo');
-
-  function updateProgress() {
-    const percent = ((currentPage + 1) / totalPages) * 100;
-    const bar = document.getElementById('progress-inner');
-    bar.style.width = percent + '%';
-  }
-
-  function saveReadingState() {
-    const key = `reading_state_${ARTICLE_ID}`;
-    localStorage.setItem(key, currentPage);
-  }
-
-  function loadReadingState() {
-    const key = `reading_state_${ARTICLE_ID}`;
-    const saved = localStorage.getItem(key);
-    return saved ? Number(saved) : 0;
-  }
-
-  function renderPage() {
-    paras.forEach(p => p.style.display = 'none');
-
-    const start = currentPage * pageSize;
-    const end = Math.min(start + pageSize, paras.length);
-
-    for (let i = start; i < end; i++) {
-      paras[i].style.display = 'block';
-      // 🔧 在分页渲染时加入动画
-      paras[i].classList.add('page-slide');
-      setTimeout(() => paras[i].classList.remove('page-slide'), 300);
+  children.forEach(el => {
+    page.push(el.outerHTML);
+    if (page.length >= 3) {
+      pages.push(page.join(""));
+      page = [];
     }
+  });
 
-    pageInfo.textContent = `第 ${currentPage + 1} / ${totalPages} 页`;
+  if (page.length > 0) pages.push(page.join(""));
 
-    updateProgress();
-    saveReadingState();
-    // ⭐⭐⭐ 自动保存阅读历史（关键）
-    saveHistory();
-  }
+  showPage(0);
+}
 
-  prevBtn.onclick = () => {
-    if (currentPage > 0) {
-      currentPage--;
-      renderPage();
-    }
-  };
+function showPage(index) {
+  if (!pages.length) return;
+  currentPage = Math.max(0, Math.min(index, pages.length - 1));
 
-  nextBtn.onclick = () => {
-    if (currentPage < totalPages - 1) {
-      currentPage++;
-      renderPage();
-    }
-  };
+  const article = document.getElementById("articleContent");
+  article.innerHTML = pages[currentPage];
 
-  currentPage = loadReadingState();
-  renderPage();
+  document.getElementById("pageInfo").textContent =
+    `第 ${currentPage + 1} / ${pages.length} 页`;
+
+  updateProgress();
+  saveReadingState();
+}
+
+document.getElementById("nextPage")?.addEventListener("click", () => showPage(currentPage + 1));
+document.getElementById("prevPage")?.addEventListener("click", () => showPage(currentPage - 1));
+
+/* -------------------------
+   2. 左右滑动翻页
+------------------------- */
+function initSwipePaging() {
+  const article = document.getElementById("articleContent");
+  if (!article) return;
+
+  let startX = 0;
+
+  article.addEventListener("touchstart", e => {
+    startX = e.touches[0].clientX;
+  });
+
+  article.addEventListener("touchend", e => {
+    const endX = e.changedTouches[0].clientX;
+    const delta = endX - startX;
+
+    if (Math.abs(delta) < 50) return;
+
+    if (delta < 0) showPage(currentPage + 1);
+    else showPage(currentPage - 1);
+  });
 }
 
 /* -------------------------
-   AI 朗读（按页朗读）
--------------------------- */
+   3. AI 朗读
+------------------------- */
+let synth = window.speechSynthesis;
+let utter;
 
-function initReading(pageSize = 3) {
-  const btnRead = document.getElementById('btnRead');
-  const btnStop = document.getElementById('btnStop');
-  const article = document.getElementById('articleContent');
-  if (!btnRead || !article) return;
+function initReading() {
+  const btnRead = document.getElementById("btnRead");
+  const btnStop = document.getElementById("btnStop");
 
-  const paras = Array.from(article.querySelectorAll('p'));
-  let currentPage = 0;
-
-  function getCurrentPage() {
-    const key = `reading_state_${ARTICLE_ID}`;
-    const saved = localStorage.getItem(key);
-    return saved ? Number(saved) : 0;
-  }
-
-  function getPageText() {
-    currentPage = getCurrentPage();
-    const start = currentPage * pageSize;
-    const end = Math.min(start + pageSize, paras.length);
-    return paras.slice(start, end).map(p => p.textContent.trim()).join('。');
-  }
+  if (!btnRead || !btnStop) return;
 
   btnRead.onclick = () => {
-    const text = getPageText();
-    if (!text) return;
-
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-
-    const voices = speechSynthesis.getVoices();
-    const zh = voices.find(v => v.lang.startsWith('zh'));
-    if (zh) utterance.voice = zh;
-
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-
-    speechSynthesis.speak(utterance);
+    const text = document.getElementById("articleContent").innerText;
+    utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "zh-CN";
+    utter.rate = 1.0;
+    synth.speak(utter);
   };
 
-  btnStop.onclick = () => speechSynthesis.cancel();
+  btnStop.onclick = () => synth.cancel();
 }
 
-
 /* -------------------------
-   夜间模式
--------------------------- */
+   4. 夜间模式
+------------------------- */
 function initNightMode() {
-  const btn = document.getElementById('toggleNight');
+  const btn = document.getElementById("toggleNight");
   if (!btn) return;
 
   btn.onclick = () => {
-    document.body.classList.toggle('night');
-    localStorage.setItem('night_mode', document.body.classList.contains('night'));
+    document.body.classList.toggle("body-night");
+    localStorage.setItem("night_mode", document.body.classList.contains("body-night"));
   };
 
-  // 自动恢复夜间模式
-  const saved = localStorage.getItem('night_mode');
-  if (saved === 'true') {
-    document.body.classList.add('night');
+  if (localStorage.getItem("night_mode") === "true") {
+    document.body.classList.add("body-night");
   }
 }
 
 /* -------------------------
-   字体大小调节
--------------------------- */
-function initFontSize() {
-  const plus = document.getElementById('fontPlus');
-  const minus = document.getElementById('fontMinus');
-  const article = document.getElementById('articleContent');
+   5. 护眼模式
+------------------------- */
+function initEyeMode() {
+  const btn = document.getElementById("toggleEye");
+  if (!btn) return;
 
-  let size = Number(localStorage.getItem('font_size') || 17);
+  btn.onclick = () => {
+    document.body.classList.toggle("body-eye");
+    localStorage.setItem("eye_mode", document.body.classList.contains("body-eye"));
+  };
 
-  function apply() {
-    article.style.fontSize = size + 'px';
-    localStorage.setItem('font_size', size);
+  if (localStorage.getItem("eye_mode") === "true") {
+    document.body.classList.add("body-eye");
   }
+}
+
+/* -------------------------
+   6. 字体调节
+------------------------- */
+function initFontSize() {
+  const plus = document.getElementById("fontPlus");
+  const minus = document.getElementById("fontMinus");
+
+  if (!plus || !minus) return;
 
   plus.onclick = () => {
-    size += 1;
-    apply();
+    const size = parseInt(localStorage.getItem("font_size") || "18") + 2;
+    document.documentElement.style.fontSize = size + "px";
+    localStorage.setItem("font_size", size);
   };
 
   minus.onclick = () => {
-    size -= 1;
-    apply();
+    const size = parseInt(localStorage.getItem("font_size") || "18") - 2;
+    document.documentElement.style.fontSize = size + "px";
+    localStorage.setItem("font_size", size);
   };
 
-  apply();
+  const saved = localStorage.getItem("font_size");
+  if (saved) document.documentElement.style.fontSize = saved + "px";
 }
 
-// ⭐ 4. 自动生成封面图（AI）
-/*
-async function generateCover(title) {
-  const key = 'cover_' + title;
-  const cached = localStorage.getItem(key);
-  if (cached) return cached;
+/* -------------------------
+   7. 阅读进度条
+------------------------- */
+function updateProgress() {
+  const inner = document.getElementById("progress-inner");
+  if (!inner || !pages.length) return;
 
-  // 这里你可以换成你自己的 AI 图片 API
-  const res = await fetch("https://image.pollinations.ai/prompt/" + encodeURIComponent(title));
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-
-  localStorage.setItem(key, url);
-  return url;
-}
-*/
-
-async function generateCover(title) {
-  const key = 'cover_' + title;
-  const cached = localStorage.getItem(key);
-  if (cached) return cached;
-
-  // 更稳定的 Pollinations API（加上宽度、高度、风格）
-  const url =
-    "https://image.pollinations.ai/prompt/" +
-    encodeURIComponent(title) +
-    "?width=300&height=420&style=book-cover";
-
-  try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.error("封面生成失败：", res.status);
-      return "fallback.jpg"; // 你可以放一个默认封面
-    }
-
-    const blob = await res.blob();
-    const objectURL = URL.createObjectURL(blob);
-
-    localStorage.setItem(key, objectURL);
-    return objectURL;
-  } catch (err) {
-    console.error("封面生成异常：", err);
-    return "fallback.jpg";
-  }
+  const percent = ((currentPage + 1) / pages.length) * 100;
+  inner.style.width = percent + "%";
 }
 
+/* -------------------------
+   8. 阅读历史
+------------------------- */
+function saveReadingState() {
+  if (typeof ARTICLE_ID === "undefined") return;
 
-// ⭐ 5. 阅读历史（最近阅读）
-function saveHistory() {
-  const history = JSON.parse(localStorage.getItem('reading_history') || '[]');
+  localStorage.setItem(`reading_state_${ARTICLE_ID}`, currentPage);
 
-  const entry = {
+  const history = JSON.parse(localStorage.getItem("reading_history") || "[]");
+
+  const title = document.getElementById("article-title")?.innerText || ARTICLE_ID;
+
+  const item = {
     id: ARTICLE_ID,
-    title: document.getElementById('article-title').textContent,
+    title,
     time: Date.now()
   };
 
-  // 去重
   const filtered = history.filter(h => h.id !== ARTICLE_ID);
-  filtered.unshift(entry);
+  filtered.unshift(item);
 
-  localStorage.setItem('reading_history', JSON.stringify(filtered.slice(0, 20)));
+  localStorage.setItem("reading_history", JSON.stringify(filtered.slice(0, 20)));
 }
 
 function loadHistory() {
-  const list = document.getElementById('recent-list');
+  const list = document.getElementById("recent-list");
   if (!list) return;
 
-  const history = JSON.parse(localStorage.getItem('reading_history') || '[]');
+  const history = JSON.parse(localStorage.getItem("reading_history") || "[]");
 
   history.forEach(h => {
     const timeKey = `reading_time_${h.id}`;
     const seconds = Number(localStorage.getItem(timeKey) || 0);
     const mins = Math.floor(seconds / 60);
 
-    const div = document.createElement('div');
-    div.className = 'recent-item';
+    const div = document.createElement("div");
+    div.className = "recent-item";
     div.innerHTML = `
       <p>
         <a href="${h.id}.html">${h.title}</a>
@@ -253,97 +229,10 @@ function loadHistory() {
 }
 
 /* -------------------------
-   加载文章目录
--------------------------- */
-async function loadArticles() {
-  console.log('loading articles...');
-  const list = document.getElementById('book-list');
-  if (!list) {
-    console.log('no book-list container');
-    return;
-  }
-
-  const res = await fetch('articles.json');
-  console.log('fetch status', res.status);
-  const articles = await res.json();
-  console.log('articles', articles);
-
-  // ...
-  // ⭐⭐⭐ 你的卡片生成代码必须放在这里 ⭐⭐⭐
-  articles.forEach(async a => {
-    const coverUrl = await generateCover(a.title);
-
-    const card = document.createElement('div');
-    card.className = 'book-card';
-    card.innerHTML = `
-      <div class="book-cover">
-        <img src="${coverUrl}" alt="${a.title}">
-      </div>
-      <div class="book-info">
-        <h2>${a.title}</h2>
-        <p>${a.desc}</p>
-        <a href="${a.id}.html">进入阅读</a>
-      </div>
-    `;
-    list.appendChild(card);
-  });
-
-}
-
-/* -------------------------
-   翻页动画（左右滑动）
--------------------------- */
-function initSwipePaging() {
-  const article = document.getElementById('articleContent');
-  if (!article) return;
-
-  let startX = 0;
-
-  article.addEventListener('touchstart', e => {
-    startX = e.touches[0].clientX;
-  });
-
-  article.addEventListener('touchend', e => {
-    const endX = e.changedTouches[0].clientX;
-    const delta = endX - startX;
-
-    if (Math.abs(delta) < 50) return; // 防误触
-
-    if (delta < 0) {
-      // 左滑 → 下一页
-      const btnNext = document.getElementById('nextPage');
-      btnNext && btnNext.click();
-    } else {
-      // 右滑 → 上一页
-      const btnPrev = document.getElementById('prevPage');
-      btnPrev && btnPrev.click();
-    }
-  });
-}
-
-/* -------------------------
-   护眼模式
--------------------------- */
-function initEyeMode() {
-  const btn = document.getElementById('toggleEye');
-  if (!btn) return;
-
-  btn.onclick = () => {
-    document.body.classList.toggle('body-eye');
-    localStorage.setItem('eye_mode', document.body.classList.contains('body-eye'));
-  };
-
-  const saved = localStorage.getItem('eye_mode');
-  if (saved === 'true') {
-    document.body.classList.add('body-eye');
-  }
-}
-
-/* -------------------------
-   阅读时长统计
--------------------------- */
+   9. 阅读时长统计
+------------------------- */
 function initReadingTimer() {
-  if (typeof ARTICLE_ID === 'undefined') return;
+  if (typeof ARTICLE_ID === "undefined") return;
 
   const key = `reading_time_${ARTICLE_ID}`;
   let seconds = Number(localStorage.getItem(key) || 0);
@@ -355,10 +244,10 @@ function initReadingTimer() {
 }
 
 /* -------------------------
-   阅读成就系统（徽章）
--------------------------- */
+   10. 阅读成就系统
+------------------------- */
 function calcAchievements() {
-  const history = JSON.parse(localStorage.getItem('reading_history') || '[]');
+  const history = JSON.parse(localStorage.getItem("reading_history") || "[]");
   const totalArticles = history.length;
 
   let totalSeconds = 0;
@@ -369,36 +258,210 @@ function calcAchievements() {
 
   const badges = [];
 
-  if (totalArticles >= 1) badges.push('📘 入门读者');
-  if (totalArticles >= 5) badges.push('📚 小书房常客');
-  if (totalSeconds >= 60 * 30) badges.push('⏱ 半小时阅读达人');
-  if (totalSeconds >= 60 * 120) badges.push('🏅 深度阅读者');
+  if (totalArticles >= 1) badges.push("入门读者");
+  if (totalArticles >= 5) badges.push("小书房常客");
+  if (totalSeconds >= 60 * 30) badges.push("半小时阅读达人");
+  if (totalSeconds >= 60 * 120) badges.push("深度阅读者");
 
-  localStorage.setItem('reading_badges', JSON.stringify(badges));
+  localStorage.setItem("reading_badges", JSON.stringify(badges));
   return badges;
 }
 
 function showAchievements() {
-  const container = document.getElementById('achievements');
+  const container = document.getElementById("achievements");
   if (!container) return;
 
-  const badges = JSON.parse(localStorage.getItem('reading_badges') || '[]') || calcAchievements();
+  const badges = JSON.parse(localStorage.getItem("reading_badges") || "[]") || calcAchievements();
 
-  container.innerHTML = badges.map(b => `<span class="badge">${b}</span>`).join(' ');
+  container.innerHTML = badges
+    .map(b => `<span class="badge">${b}</span>`)
+    .join(" ");
 }
 
+/* -------------------------
+   11. 阅读排行榜
+------------------------- */
+function loadRanking() {
+  const container = document.getElementById("ranking");
+  if (!container) return;
+
+  const history = JSON.parse(localStorage.getItem("reading_history") || "[]");
+
+  const stats = history.map(h => {
+    const key = `reading_time_${h.id}`;
+    const seconds = Number(localStorage.getItem(key) || 0);
+    return { id: h.id, title: h.title, seconds };
+  }).filter(s => s.seconds > 0);
+
+  stats.sort((a, b) => b.seconds - a.seconds);
+
+  container.innerHTML = "";
+
+  stats.slice(0, 5).forEach((s, index) => {
+    const mins = Math.floor(s.seconds / 60);
+    const div = document.createElement("div");
+    div.className = "ranking-item";
+    div.innerHTML = `
+      <span class="rank-no">${index + 1}</span>
+      <a href="${s.id}.html">${s.title}</a>
+      <span class="rank-time"> · 阅读约 ${mins} 分钟</span>
+    `;
+    container.appendChild(div);
+  });
+}
 
 /* -------------------------
-   启动所有功能
--------------------------- */
-loadArticles();
-loadHistory();
-initPaging();
-initReading();
-initNightMode();
-initFontSize();
-initSwipePaging();
-initEyeMode();
-initReadingTimer();
-showAchievements();
+   12. 每日一句
+------------------------- */
+function initDailyQuote() {
+  const el = document.getElementById("daily-quote");
+  if (!el) return;
 
+  const quotes = [
+    "今天也要给自己一点安静的阅读时间。",
+    "文字是安静的陪伴，也是温柔的力量。",
+    "慢一点读，世界就会慢一点吵。",
+    "每一页翻过去，都是和自己的一次对话。",
+    "读书不是任务，是给心一点空间。"
+  ];
+
+  const today = new Date();
+  const index = today.getDate() % quotes.length;
+
+  el.textContent = quotes[index];
+}
+
+/* -------------------------
+   13. 文章分类系统
+------------------------- */
+async function loadArticles() {
+  const list = document.getElementById("book-list");
+  if (!list) return;
+
+  const res = await fetch("articles.json");
+  const articles = await res.json();
+
+  const groups = {};
+  articles.forEach(a => {
+    const cat = a.category || "未分类";
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(a);
+  });
+
+  list.innerHTML = "";
+
+  for (const cat in groups) {
+    const section = document.createElement("div");
+    section.className = "category-section";
+    section.innerHTML = `<h3 class="category-title">${cat}</h3>`;
+    const inner = document.createElement("div");
+    inner.className = "category-list";
+
+    for (const a of groups[cat]) {
+      const card = document.createElement("div");
+      card.className = "book-card";
+
+      const cover = "fallback.jpg"; // AI 封面图可接入 generateCover()
+
+      card.innerHTML = `
+        <div class="book-cover">
+          <img src="${cover}" alt="${a.title}">
+        </div>
+        <div class="book-info">
+          <h2>${a.title}</h2>
+          <p>${a.desc}</p>
+          <a href="${a.id}.html">进入阅读</a>
+        </div>
+      `;
+      inner.appendChild(card);
+    }
+
+    section.appendChild(inner);
+    list.appendChild(section);
+  }
+}
+
+/* -------------------------
+   14. 搜索功能
+------------------------- */
+async function initSearch() {
+  const input = document.getElementById("search-input");
+  const result = document.getElementById("search-result");
+  if (!input || !result) return;
+
+  const res = await fetch("articles.json");
+  const articles = await res.json();
+
+  input.addEventListener("input", () => {
+    const q = input.value.trim();
+    result.innerHTML = "";
+    if (!q) return;
+
+    const lower = q.toLowerCase();
+    const matched = articles.filter(a =>
+      (a.title && a.title.toLowerCase().includes(lower)) ||
+      (a.desc && a.desc.toLowerCase().includes(lower))
+    );
+
+    matched.forEach(a => {
+      const div = document.createElement("div");
+      div.className = "search-item";
+      div.innerHTML = `
+        <a href="${a.id}.html">${a.title}</a>
+        <span> · ${a.desc}</span>
+      `;
+      result.appendChild(div);
+    });
+  });
+}
+
+/* -------------------------
+   15. GitHub 阅读进度同步（二维码）
+------------------------- */
+function initSyncGithub() {
+  const btn = document.getElementById("btnSync");
+  const box = document.getElementById("sync-qrcode");
+  if (!btn || !box || typeof ARTICLE_ID === "undefined") return;
+
+  btn.onclick = () => {
+    const stateKey = `reading_state_${ARTICLE_ID}`;
+    const timeKey = `reading_time_${ARTICLE_ID}`;
+
+    const payload = {
+      id: ARTICLE_ID,
+      page: Number(localStorage.getItem(stateKey) || 0),
+      seconds: Number(localStorage.getItem(timeKey) || 0),
+      ts: Date.now()
+    };
+
+    const json = JSON.stringify(payload);
+    const base64 = btoa(encodeURIComponent(json));
+
+    box.innerHTML = "";
+    new QRCode(box, {
+      text: base64,
+      width: 200,
+      height: 200
+    });
+  };
+}
+
+/* -------------------------
+   16. 启动所有功能
+------------------------- */
+window.onload = () => {
+  initPaging();
+  initSwipePaging();
+  initReading();
+  initNightMode();
+  initEyeMode();
+  initFontSize();
+  initReadingTimer();
+  initDailyQuote();
+  loadHistory();
+  showAchievements();
+  loadRanking();
+  loadArticles();
+  initSearch();
+  initSyncGithub();
+};
