@@ -411,7 +411,7 @@ async function loadArticles() {
       const card = document.createElement("div");
       card.className = "book-card";
 
-      const cover = "fallback.jpg"; // AI 封面图可接入 generateCover()
+      let cover = "fallback.jpg"; // AI 封面图可接入 generateCover()
       cover = await generateCover(a.title);
 
       card.innerHTML = `
