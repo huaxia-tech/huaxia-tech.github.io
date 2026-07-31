@@ -111,3 +111,26 @@ body.night #progress-inner {
   margin: 4px;
   font-size: 14px;
 }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  background: #f5e9c8;
+  color: #333;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin: 4px;
+  font-size: 14px;
+}
+
+.badge::before {
+  content: "🏅";
+  margin-right: 6px;
+}
+
+/*  🏅 每日一句模块 */
+.daily-quote {
+  color: #303fd6 !important;
+  /* font-weight: bold; */
+  background: #fff3cd;
+}
