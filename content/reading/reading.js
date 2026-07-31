@@ -195,35 +195,35 @@ async function generateCover(title) {
   const cached = localStorage.getItem(key);
   if (cached) return cached;
 
-  const prompt = `Book cover: ${title}`;
+  const sizes = [
+    [256, 384],   // 尝试 3:4 小图
+    [300, 420],   // 你的原始尺寸
+    [512, 768]    // 高清大图
+  ];
 
-  const url =
-    "https://image.pollinations.ai/prompt/" +
-    encodeURIComponent(prompt) +
-    "?width=300height=420&model=flux&nologo=true";
+  for (const [w, h] of sizes) {
+    const url =
+      "https://image.pollinations.ai/prompt/" +
+      encodeURIComponent(title) +
+      `?width=${w}&height=${h}&style=book-cover&model=flux`;
 
-  try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.error("封面生成失败：", res.status);
-      return "fallback.jpg";
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+
+      const blob = await res.blob();
+      if (blob.size === 0) continue; // 空图，跳过
+
+      const objectURL = URL.createObjectURL(blob);
+      localStorage.setItem(key, objectURL);
+      return objectURL;
+    } catch (e) {
+      continue;
     }
-
-    const blob = await res.blob();
-    if (blob.size === 0) {
-      console.error("Pollinations 返回空图");
-      return "fallback.jpg";
-    }
-
-    const objectURL = URL.createObjectURL(blob);
-    localStorage.setItem(key, objectURL);
-    return objectURL;
-  } catch (err) {
-    console.error("封面生成异常：", err);
-    return "fallback.jpg";
   }
-}
 
+  return "fallback.jpg";
+}
 
 
 /* -------------------------
