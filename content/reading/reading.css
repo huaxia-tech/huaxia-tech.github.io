@@ -15,13 +15,13 @@
 }
 
 /* 正文 */
-.article-content {
-  max-width: 900px;
-  margin: auto;
-  padding: 20px;
-  line-height: 1.8;
-  font-size: 17px;
-}
+/* .article-content { */
+/*  max-width: 900px; */
+/*  margin: auto; */
+/*  padding: 20px; */
+/*  line-height: 1.8; */
+/*  font-size: 17px; */
+/* } */
 
 /* 翻页按钮 */
 .pager {
@@ -43,19 +43,28 @@
 
 /* 阅读进度条 */
 .progress-bar {
-  max-width: 900px;
-  margin: 10px auto;
+  /* max-width: 900px; */
+  width:100%
+  /* margin: 10px auto; */
   height: 6px;
-  background: #eee;
-  border-radius: 3px;
+  /* background: #eee; */
+  /* background: #ddd; */
+  background: #e0e0e0;
+  /* border-radius: 3px; */
+  border-radius: 4px;
+  /* margin-top: 10px; */
+  margin-top: 8px;
+  overflow: hidden;
 }
 
 #progress-inner {
   height: 100%;
   width: 0%;
-  background: #3B82F6;
-  border-radius: 3px;
-  transition: width 0.2s;
+  /* background: #3B82F6; */
+  background: linear-gradient(90deg, #4caf50, #81c784);
+  /* border-radius: 3px; */
+  /* transition: width 0.2s; */
+  transition: width 0.3s ease;
 }
 
 /* 夜间模式整体背景 */
@@ -87,6 +96,27 @@ body.night #progress-inner {
 @keyframes slideIn {
   from { transform: translateX(40px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
+}
+
+/* 2️⃣ 真·微信读书式左右翻页动画  */
+.page {
+  animation: pageFade 0.25s ease;
+}
+
+.page-slide-left {
+  animation: slideLeft 0.25s ease;
+}
+.page-slide-right {
+  animation: slideRight 0.25s ease;
+}
+
+@keyframes slideLeft {
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slideRight {
+  from { transform: translateX(-40px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
 
 /* 护眼模式（米黄背景） */
@@ -134,3 +164,191 @@ body.night #progress-inner {
   /* font-weight: bold; */
   background: #fff3cd;
 }
+
+/* 书架容器：瀑布流布局 */
+.bookshelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* 单个卡片 */
+.book-card {
+  padding: 12px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.book-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+  border-color: rgba(0,0,0,0.12);
+}
+
+/* 封面图片 */
+.book-cover {
+  width: 100%;
+  border-radius: 16px;
+  display: block;
+}
+
+/* 标题 + 分类 */
+.book-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.book-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.book-category {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #f3f3f3;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+/* 评分星级 */
+.book-rating {
+  font-size: 13px;
+  color: #ffb300;
+}
+
+/* 阅读时长 */
+.book-time {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* 继续阅读按钮 */
+.book-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.read-btn {
+  padding: 4px 10px;
+  font-size: 13px;
+  border-radius: 999px;
+  border: none;
+  background: #4caf50;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.read-btn:hover {
+  background: #43a047;
+  transform: translateY(-1px);
+}
+
+/* 正文内容（可滚动） */
+.article-content {
+  max-height: 70vh;     /* 限制高度，让内容出现滚动条 */
+  overflow-y: auto;     /* 允许竖向滚动 */
+  padding: 20px;
+  line-height: 1.8;
+  /* font-size: 17px; */
+  font-size: var(--article-font-size, 17px);
+  /* padding-right: 10px; */  /* ⭐ 防止滚动条遮住文字 */
+  margin: auto;
+  max-width: 900px;
+}
+
+/* 分页模式需要这样的 CSS */
+#articleContent {
+  height: 70vh;          /* ⭐ 固定高度 */
+  overflow: hidden;      /* ⭐ 不允许滚动 */
+  position: relative;
+}
+
+
+/* 4️⃣ 阅读器主题（仿 Kindle / 仿微信读书） */
+body.theme-kindle {
+  background: #f5f1e8;
+  color: #333;
+}
+body.theme-kindle .article-content {
+  background: #fbf7ee;
+  font-family: "Georgia", "Songti SC", serif;
+}
+
+body.theme-wechat {
+  background: #f4f5f7;
+  color: #222;
+}
+body.theme-wechat .article-content {
+  background: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui;
+}
+
+/* ⭐ 第 2 步：分页模式专用 CSS */
+.paged-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin: 20px auto;
+  font-size: 18px;
+}
+
+.paged-controls button {
+  padding: 8px 16px;
+  font-size: 16px;
+}
+
+/* 分页模式专用 */
+.paged-mode #articleContent {
+  height: 70vh;
+  overflow: hidden;
+}
+
+/* 滚动模式专用 */
+.scroll-mode #articleContent {
+  height: auto;
+  overflow-y: auto;
+}
+
+/* ⭐ 顶部进度条容器 */
+/* #progress-bar { */
+/*   width: 100%; */
+/*   height: 6px; */             /* ⭐ 必须有高度 */
+/*   background: #eee; */        /* ⭐ 背景色 */
+/*   position: fixed; */         /* ⭐ 固定在顶部 */
+/*   top: 0; */
+/*   left: 0; */
+/*   z-index: 9999; */           /* ⭐ 永远在最上层 */
+/* } */
+
+
+/* ⭐ 顶部进度条（在阅读器内部，而不是页面顶部） */
+#progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #eee;
+  margin-top: 10px;        /* ⭐ 跟工具栏保持距离 */
+  position: relative;      /* ⭐ 关键：不要 fixed */
+  overflow: hidden;
+}
+
+/* ⭐ 内部进度条 */
+#progress-inner {
+  width: 0%;
+  height: 100%;
+  background: #4caf50;      /* ⭐ 绿色进度条（可改） */
+  transition: width 0.2s;   /* ⭐ 平滑动画 */
+}
+
+

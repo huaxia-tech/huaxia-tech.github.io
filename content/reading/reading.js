@@ -19,9 +19,14 @@
    ✔ AI 封面图生成（含 fallback）
 --------------------------------------------------------- */
 
+let READING_MODE = localStorage.getItem("reading_mode") || "scroll"; 
+// 可选：scroll / paged
+
+
 /* -------------------------
    1. 自动分页
 ------------------------- */
+/*
 let pages = [];
 let currentPage = 0;
 
@@ -62,10 +67,141 @@ function showPage(index) {
 
 document.getElementById("nextPage")?.addEventListener("click", () => showPage(currentPage + 1));
 document.getElementById("prevPage")?.addEventListener("click", () => showPage(currentPage - 1));
+*/
+
+
+
+// ⭐ 3. 滚动模式（scroll 模式）
+function initModeToggle() {
+  const btn = document.getElementById("toggleMode");
+  if (!btn) return;
+
+  btn.onclick = () => {
+    READING_MODE = (READING_MODE === "scroll") ? "paged" : "scroll";
+    localStorage.setItem("reading_mode", READING_MODE);
+    location.reload(); // ⭐ 切换模式后刷新页面
+  };
+}
+
+function initScrollMode() {
+  if (typeof ARTICLE_ID === "undefined") return;   // ⭐ 防止在书架页面报错
+  
+  // ⭐ 隐藏分页按钮
+  const controls = document.getElementById("pagedControls");
+  if (controls) controls.style.display = "none";
+  
+  const article = document.getElementById("articleContent");
+  if (!article) return;
+
+  // 恢复滚动位置
+  const savedY = Number(localStorage.getItem("scroll_" + ARTICLE_ID) || 0);
+  if (savedY > 0) article.scrollTop = savedY;
+
+  // 滚动进度条
+  article.addEventListener("scroll", () => {
+    const h = article.scrollHeight - article.clientHeight;
+    const y = article.scrollTop;
+    const percent = Math.min(100, Math.round((y / h) * 100));
+
+    document.getElementById("progress-inner").style.width = percent + "%";
+    localStorage.setItem("progress_" + ARTICLE_ID, percent);
+    localStorage.setItem("scroll_" + ARTICLE_ID, y);
+  });
+}
+
+
+// ⭐ 4. 分页模式（paged 模式）
+let pages = [];
+let currentPage = 0;
+
+function initPagedMode() {
+  autoPaging();
+  showPage(0);
+  initSwipePaging();
+  
+  // ⭐ 显示分页按钮
+  const controls = document.getElementById("pagedControls");
+  if (controls) controls.style.display = "flex";
+
+  // ⭐ 按钮事件
+  document.getElementById("prevPageBtn").onclick = () => showPage(currentPage - 1);
+  document.getElementById("nextPageBtn").onclick = () => showPage(currentPage + 1);
+}
+
+function autoPaging() {
+  const article = document.getElementById("articleContent");
+
+  const pageHeight = article.clientHeight;   // ⭐ 必须在清空前测量
+  const nodes = Array.from(article.children);
+
+  pages = [];
+  let curPage = document.createElement("div");
+  curPage.className = "page";
+
+  article.innerHTML = "";
+  article.appendChild(curPage);
+
+  nodes.forEach(node => {
+    curPage.appendChild(node);
+
+    if (curPage.scrollHeight > pageHeight) {
+      curPage.removeChild(node);
+      pages.push(curPage);
+
+      curPage = document.createElement("div");
+      curPage.className = "page";
+      curPage.appendChild(node);
+      article.appendChild(curPage);
+    }
+  });
+
+  pages.push(curPage);
+}
+
+function showPage(index) {
+  const article = document.getElementById("articleContent");
+
+  currentPage = Math.max(0, Math.min(index, pages.length - 1));
+  article.innerHTML = "";
+  article.appendChild(pages[currentPage]);
+
+  // ⭐ 页码显示
+  const info = document.getElementById("pageInfo");
+  if (info) info.textContent = `第 ${currentPage + 1} / ${pages.length} 页`;
+
+  // ⭐ 进度条
+  const percent = ((currentPage + 1) / pages.length) * 100;
+  document.getElementById("progress-inner").style.width = percent + "%";
+
+  // ⭐ 保存进度
+  localStorage.setItem("reading_state_" + ARTICLE_ID, currentPage);
+  localStorage.setItem("progress_" + ARTICLE_ID, percent);
+}
+
+function initSwipePaging() {
+  const article = document.getElementById("articleContent");
+  let startX = 0;
+
+  article.addEventListener("touchstart", e => {
+    startX = e.touches[0].clientX;
+  });
+
+  article.addEventListener("touchend", e => {
+    const endX = e.changedTouches[0].clientX;
+    const delta = endX - startX;
+
+    if (Math.abs(delta) < 50) return;
+
+    if (delta < 0) showPage(currentPage + 1);
+    else showPage(currentPage - 1);
+  });
+}
+
 
 /* -------------------------
    2. 左右滑动翻页
 ------------------------- */
+/*
 function initSwipePaging() {
   const article = document.getElementById("articleContent");
   if (!article) return;
@@ -84,6 +220,25 @@ function initSwipePaging() {
 
     if (delta < 0) showPage(currentPage + 1);
     else showPage(currentPage - 1);
+  });
+}
+*/
+
+/* -------------------------
+   ⭐ 1. 滚动阅读进度条
+------------------------- */
+function initScrollProgress() {
+  const article = document.getElementById("articleContent");
+  const bar = document.getElementById("progress-inner");
+  if (!article || !bar || typeof ARTICLE_ID === "undefined") return;
+
+  article.addEventListener("scroll", () => {
+    const h = article.scrollHeight - article.clientHeight;
+    const y = article.scrollTop;
+    const percent = Math.min(100, Math.round((y / h) * 100));
+
+    bar.style.width = percent + "%";
+    localStorage.setItem("progress_" + ARTICLE_ID, percent);
   });
 }
 
@@ -156,19 +311,24 @@ function initFontSize() {
   if (!plus || !minus) return;
 
   plus.onclick = () => {
-    const size = parseInt(localStorage.getItem("font_size") || "18") + 2;
-    document.documentElement.style.fontSize = size + "px";
+    const size = parseInt(localStorage.getItem("font_size") || "17") + 2;
+    //document.documentElement.style.fontSize = size + "px";
+    document.documentElement.style.setProperty("--article-font-size", size + "px");
     localStorage.setItem("font_size", size);
   };
 
   minus.onclick = () => {
-    const size = parseInt(localStorage.getItem("font_size") || "18") - 2;
-    document.documentElement.style.fontSize = size + "px";
+    const size = parseInt(localStorage.getItem("font_size") || "17") - 2;
+    //document.documentElement.style.fontSize = size + "px";
+    document.documentElement.style.setProperty("--article-font-size", size + "px");
     localStorage.setItem("font_size", size);
   };
 
   const saved = localStorage.getItem("font_size");
-  if (saved) document.documentElement.style.fontSize = saved + "px";
+  //if (saved) document.documentElement.style.fontSize = saved + "px";
+  if (saved) {
+    document.documentElement.style.setProperty("--article-font-size", saved + "px");
+  }
 }
 
 /* ---------------------------------
@@ -223,6 +383,125 @@ async function generateCover(title) {
   }
 
   return "fallback.jpg";
+}
+
+/* ----------------------------------------------
+   原4的延续. ⭐ 直接可用的封面生成器（JS 版本）
+---------------------------------------------- */
+//async function generateLocalCover(title) {
+// ⭐ 本地封面生成器（不要在这里写任何注释破坏语法）
+async function generateLocalCover(title, category = "学习") {
+  const key = 'cover_local_' + title;
+  const cached = localStorage.getItem(key);
+  if (cached) return cached;
+
+  // 封面尺寸（3:4）
+  const width = 256;
+  const height = 384;
+
+  // 创建 Canvas
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  // 自动生成背景色（根据标题哈希）
+  //function hashColor(str) {
+  // 渐变背景（根据标题生成颜色）
+  function hashHue(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    //const hue = Math.abs(hash % 360);
+    //return `hsl(${hue}, 60%, 70%)`;
+    return Math.abs(hash % 360);
+  }
+
+  //ctx.fillStyle = hashColor(title);
+  const hue = hashHue(title);
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  //gradient.addColorStop(0, `hsl(${hue}, 70%, 75%)`);
+  gradient.addColorStop(0, `hsl(${hue}, 70%, 80%)`);
+  //gradient.addColorStop(1, `hsl(${hue + 20}, 70%, 65%)`);
+  gradient.addColorStop(1, `hsl(${hue + 25}, 70%, 65%)`);
+  ctx.fillStyle = gradient;
+  
+  ctx.fillRect(0, 0, width, height);
+  
+  // 轻微纹理（噪点）
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    const noise = (Math.random() - 0.5) * 20;
+    data[i] += noise;
+    data[i + 1] += noise;
+    data[i + 2] += noise;
+  }
+  ctx.putImageData(imageData, 0, 0);
+
+  // 圆角遮罩
+  const radius = 20;
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.beginPath();
+  ctx.moveTo(radius, 0);
+  ctx.lineTo(width - radius, 0);
+  ctx.quadraticCurveTo(width, 0, width, radius);
+  ctx.lineTo(width, height - radius);
+  ctx.quadraticCurveTo(width, height, width - radius, height);
+  ctx.lineTo(radius, height);
+  ctx.quadraticCurveTo(0, height, 0, height - radius);
+  ctx.lineTo(0, radius);
+  ctx.quadraticCurveTo(0, 0, radius, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalCompositeOperation = "source-over";
+
+  // 标题文字
+  //ctx.fillStyle = "#333";
+  ctx.fillStyle = "#222";
+  //ctx.font = "bold 28px sans-serif";
+  ctx.font = "bold 26px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "center";
+
+  // 自动换行
+  function wrapText(text, x, y, maxWidth, lineHeight) {
+    //const words = text.split("");
+    const chars = text.split("");
+    let line = "";
+    //for (let n = 0; n < words.length; n++) {
+    for (let c of chars) {
+      //const testLine = line + words[n];
+      const test = line + c;
+      //const metrics = ctx.measureText(testLine);
+      //if (metrics.width > maxWidth) {
+      if (ctx.measureText(test).width > maxWidth) {
+        ctx.fillText(line, x, y);
+        //line = words[n];
+        line = c;
+        y += lineHeight;
+      } else {
+        //line = testLine;
+        line = test;
+      }
+    }
+    ctx.fillText(line, x, y);
+  }
+
+  //wrapText(title, width / 2, height / 2, width * 0.8, 36);
+  wrapText(title, width / 2, height / 2 - 20, width * 0.8, 34);
+  
+  // 分类标签★増
+  //ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillStyle = "rgba(0,0,0,0.65)";
+  //ctx.font = "20px sans-serif";
+  ctx.font = "18px system-ui, sans-serif";
+  ctx.fillText(category, width / 2, height - 40);
+
+  // 转成图片 URL
+  const url = canvas.toDataURL("image/png");
+  localStorage.setItem(key, url);
+  return url;
 }
 
 
@@ -412,25 +691,73 @@ async function loadArticles() {
     section.className = "category-section";
     section.innerHTML = `<h3 class="category-title">${cat}</h3>`;
     const inner = document.createElement("div");
-    inner.className = "category-list";
+    //inner.className = "category-list";
+    inner.className = "bookshelf";   // ⭐ 微信读书风格瀑布流布局
 
     for (const a of groups[cat]) {
       const card = document.createElement("div");
       card.className = "book-card";
 
-      let cover = "fallback.jpg"; // AI 封面图可接入 generateCover()
-      cover = await generateCover(a.title);
+      //let cover = "fallback.jpg"; // AI 封面图可接入 generateCover()
+      //cover = await generateCover(a.title);
+      // ⭐ 直接使用封面生成器
+      //cover = await generateLocalCover(a.title);
+      
+      // ⭐ 本地封面生成（渐变 + 纹理 + 圆角）
+      const cover = await generateLocalCover(a.title, a.category);
 
+      // ⭐ 阅读进度
+      const progress = localStorage.getItem("progress_" + a.id) || 0;
+
+      // ⭐ 阅读时长
+      const minutes = localStorage.getItem("minutes_" + a.id) || 0;
+
+      // ⭐ 评分（如果 JSON 没写，就默认 4.5）
+      const rating = a.rating || 4.5;
+      const stars = "★★★★★☆☆☆☆☆".slice(0, Math.round(rating));
+
+      // ⭐ 卡片 HTML（微信读书风格）
+      //card.innerHTML = `
+        //<div class="book-cover">
+          //<img src="${cover}" alt="${a.title}">
+        //</div>
+        //<div class="book-info">
+          //<h2>${a.title}</h2>
+          //<p>${a.desc}</p>
+          //<a href="${a.id}.html">进入阅读</a>
+        //</div>
+      //`;
       card.innerHTML = `
-        <div class="book-cover">
-          <img src="${cover}" alt="${a.title}">
+        <img class="book-cover" src="${cover}" alt="${a.title}">
+
+        <div class="book-title">${a.title}</div>
+
+        <div class="book-meta">
+          <span class="book-category">${a.category}</span>
+          <span class="book-rating">${stars} ${rating.toFixed(1)}</span>
         </div>
-        <div class="book-info">
-          <h2>${a.title}</h2>
-          <p>${a.desc}</p>
-          <a href="${a.id}.html">进入阅读</a>
+
+        <div class="book-time">已阅读约 ${minutes} 分钟</div>
+
+        <div class="progress-bar">
+          <div class="progress-inner" style="width: ${progress || 0}%"></div>
+        </div>
+
+        <div class="book-actions">
+          <button class="read-btn">继续阅读</button>
         </div>
       `;
+
+      // ⭐ 点击事件（卡片或按钮都能进入阅读）
+      card.addEventListener("click", (e) => {
+        if (!e.target.classList.contains("read-btn")) {
+          location.href = `${a.id}.html`;
+        }
+      });
+      card.querySelector(".read-btn").addEventListener("click", () => {
+        location.href = `${a.id}.html`;
+      });
+      
       inner.appendChild(card);
     }
 
@@ -473,9 +800,7 @@ async function initSearch() {
   });
 }
 
-/* -------------------------
-   15. GitHub 阅读进度同步（二维码）
-------------------------- */
+
 function initSyncGithub() {
   const btn = document.getElementById("btnSync");
   const box = document.getElementById("sync-qrcode");
@@ -484,10 +809,12 @@ function initSyncGithub() {
   btn.onclick = () => {
     const stateKey = `reading_state_${ARTICLE_ID}`;
     const timeKey = `reading_time_${ARTICLE_ID}`;
+    const progressKey = `progress_${ARTICLE_ID}`;
 
     const payload = {
       id: ARTICLE_ID,
       page: Number(localStorage.getItem(stateKey) || 0),
+      percent: Number(localStorage.getItem(progressKey) || 0),
       seconds: Number(localStorage.getItem(timeKey) || 0),
       ts: Date.now()
     };
@@ -504,12 +831,86 @@ function initSyncGithub() {
   };
 }
 
+
+function initTheme() {
+  const btnKindle = document.getElementById("themeKindle");
+  const btnWechat = document.getElementById("themeWechat");
+  if (!btnKindle || !btnWechat) return;
+
+  const applyTheme = (name) => {
+    document.body.classList.remove("theme-kindle", "theme-wechat");
+    if (name) document.body.classList.add("theme-" + name);
+    localStorage.setItem("reader_theme", name);
+  };
+
+  btnKindle.onclick = () => applyTheme("kindle");
+  btnWechat.onclick = () => applyTheme("wechat");
+
+  const saved = localStorage.getItem("reader_theme");
+  if (saved) applyTheme(saved);
+}
+
+
+function showPageWithAnim(nextIndex, direction) {
+  const article = document.getElementById("articleContent");
+  if (!article) return;
+
+  currentPage = Math.max(0, Math.min(nextIndex, pages.length - 1));
+  article.innerHTML = "";
+  const page = pages[currentPage];
+  page.classList.remove("page-slide-left", "page-slide-right");
+
+  if (direction === "next") page.classList.add("page-slide-left");
+  if (direction === "prev") page.classList.add("page-slide-right");
+
+  article.appendChild(page);
+
+  const info = document.getElementById("pageInfo");
+  if (info) info.textContent = `第 ${currentPage + 1} / ${pages.length} 页`;
+}
+
+/*
+function applyModeCSS() {
+  const article = document.getElementById("articleContent");
+
+  if (READING_MODE === "scroll") {
+    article.style.height = "auto";
+    article.style.overflowY = "auto";
+  } else {
+    article.style.height = "70vh";
+    article.style.overflow = "hidden";
+  }
+}
+*/
+
+function applyModeCSS() {
+  const body = document.body;
+
+  if (READING_MODE === "paged") {
+    body.classList.add("paged-mode");
+    body.classList.remove("scroll-mode");
+  } else {
+    body.classList.add("scroll-mode");
+    body.classList.remove("paged-mode");
+  }
+}
+
+
 /* -------------------------
    16. 启动所有功能
 ------------------------- */
 window.onload = () => {
-  initPaging();
-  initSwipePaging();
+  initModeToggle();     // ⭐ 模式切换按钮
+   applyModeCSS();
+  if (READING_MODE === "scroll") {
+    initScrollMode();   // ⭐ 滚动阅读模式
+  } else {
+    initPagedMode();    // ⭐ 分页阅读模式
+  }
+
+  // 通用功能（两种模式都需要）
+  initTheme();
+  //showPageWithAnim(0, "next");
   initReading();
   initNightMode();
   initEyeMode();
