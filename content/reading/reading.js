@@ -835,10 +835,12 @@ async function loadArticles() {
       const cover = await generateLocalCover(a.title, a.category);
 
       // ⭐ 阅读进度
-      const progress = localStorage.getItem("progress_" + a.id) || 0;
+      //const progress = localStorage.getItem("progress_" + a.id) || 0;
+      const progress = Number(localStorage.getItem("progress_" + a.id) || 0);
 
       // ⭐ 阅读时长
-      const minutes = localStorage.getItem("minutes_" + a.id) || 0;
+      //const minutes = localStorage.getItem("minutes_" + a.id) || 0;
+      const minutes = Number(localStorage.getItem("minutes_" + a.id) || 0);
 
       // ⭐ 评分（如果 JSON 没写，就默认 4.5）
       const rating = a.rating || 4.5;
