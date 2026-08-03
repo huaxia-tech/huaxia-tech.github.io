@@ -132,6 +132,8 @@ let pages = [];
 let currentPage = 0;
 
 function initPagedMode() {
+  const article = document.getElementById("articleContent");
+  if (!article) return;   // ⭐ 首页没有文章内容，直接退出
   autoPaging();
   showPage(0);
   initSwipePaging();
@@ -147,7 +149,7 @@ function initPagedMode() {
 
 function autoPaging() {
   const article = document.getElementById("articleContent");
-
+  if (!article) return;   // ⭐ 首页没有文章内容，直接退出
   const pageHeight = article.clientHeight;   // ⭐ 必须在清空前测量
   const nodes = Array.from(article.children);
 
