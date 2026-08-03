@@ -625,7 +625,9 @@ async function generateLocalCover(title, category = "学习") {
   ctx.fillText(category, width / 2, height - 40);
 
   // 返回 Base64 图片（微信浏览器 100% 支持）
-  return canvas.toDataURL("image/png");
+  //return canvas.toDataURL("image/png");
+  // 🚨 微信浏览器稳定版：使用 JPEG + 降低质量
+  return canvas.toDataURL("image/jpeg", 0.75);
 }
 
 
