@@ -674,7 +674,8 @@ async function loadArticles() {
   const list = document.getElementById("book-list");
   if (!list) return;
 
-  const res = await fetch("articles.json");
+  //const res = await fetch("articles.json");
+  const res = await fetch(`articles.json?v=${new Date().getTime()}`);
   const articles = await res.json();
 
   const groups = {};
