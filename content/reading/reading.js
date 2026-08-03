@@ -350,6 +350,7 @@ async function generateCover(title) {
 }
 */
 
+/*
 async function generateCover(title) {
   const key = 'cover_' + title;
   const cached = localStorage.getItem(key);
@@ -384,6 +385,23 @@ async function generateCover(title) {
 
   return "fallback.jpg";
 }
+*/
+
+// 🧪 我帮你写一个微信浏览器可用的封面生成函数
+// ✔ 使用 picsum.photos（稳定、微信可用）
+async function generateCover(title) {
+  const key = 'cover_' + title;
+  const cached = localStorage.getItem(key);
+  if (cached) return cached;
+
+  // 使用稳定的图片服务
+  const url = `https://picsum.photos/seed/${encodeURIComponent(title)}/300/420`;
+
+  // 直接缓存 URL，不使用 blob
+  localStorage.setItem(key, url);
+  return url;
+}
+
 
 /* ----------------------------------------------
    原4的延续. ⭐ 直接可用的封面生成器（JS 版本）
