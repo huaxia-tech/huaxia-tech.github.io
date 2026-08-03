@@ -18,6 +18,23 @@
    ✔ GitHub 阅读进度同步（二维码）
    ✔ AI 封面图生成（含 fallback）
 --------------------------------------------------------- */
+window.onerror = function (msg, url, line, col, error) {
+  const box = document.createElement("div");
+  box.style.position = "fixed";
+  box.style.bottom = "0";
+  box.style.left = "0";
+  box.style.right = "0";
+  box.style.background = "rgba(255,0,0,0.8)";
+  box.style.color = "#fff";
+  box.style.padding = "10px";
+  box.style.fontSize = "14px";
+  box.style.zIndex = "99999";
+  box.innerText = "JS错误: " + msg + " @ " + line + ":" + col;
+  document.body.appendChild(box);
+};
+
+
+
 
 let READING_MODE = localStorage.getItem("reading_mode") || "scroll"; 
 // 可选：scroll / paged
