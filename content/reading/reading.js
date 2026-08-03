@@ -389,6 +389,7 @@ async function generateCover(title) {
 
 // 🧪 我帮你写一个微信浏览器可用的封面生成函数
 // ✔ 使用 picsum.photos（稳定、微信可用）
+/*
 async function generateCover(title) {
   const key = 'cover_' + title;
   const cached = localStorage.getItem(key);
@@ -401,6 +402,23 @@ async function generateCover(title) {
   localStorage.setItem(key, url);
   return url;
 }
+*/
+
+// 🧪 我给你一个微信浏览器 100% 可用的版本
+// ✔ generateCover() 只返回你自己的域名图片
+async function generateCover(title) {
+  const key = 'cover_' + title;
+  const cached = localStorage.getItem(key);
+  if (cached) return cached;
+
+  // 你的 GitHub Pages 图片地址
+  const url = `https://huaxia-tech.github.io/covers/${encodeURIComponent(title)}.jpg`;
+
+  localStorage.setItem(key, url);
+  return url;
+}
+// 把封面图片上传到：huaxia-tech.github.io/covers/ 
+
 
 
 /* ----------------------------------------------
@@ -408,6 +426,7 @@ async function generateCover(title) {
 ---------------------------------------------- */
 //async function generateLocalCover(title) {
 // ⭐ 本地封面生成器（不要在这里写任何注释破坏语法）
+/*
 async function generateLocalCover(title, category = "学习") {
   const key = 'cover_local_' + title;
   const cached = localStorage.getItem(key);
@@ -521,6 +540,94 @@ async function generateLocalCover(title, category = "学习") {
   localStorage.setItem(key, url);
   return url;
 }
+*/
+
+// 🟩 微信浏览器稳定版：generateLocalCover（最终版）
+async function generateLocalCover(title, category = "学习") {
+  const width = 256;
+  const height = 384;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  // 背景色（根据标题生成稳定色调）
+  function hashHue(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash % 360);
+  }
+
+  const hue = hashHue(title);
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, `hsl(${hue}, 70%, 80%)`);
+  gradient.addColorStop(1, `hsl(${hue + 25}, 70%, 65%)`);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+
+  // 轻微噪点纹理（让封面更像真实纸张）
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    const noise = (Math.random() - 0.5) * 20;
+    data[i] += noise;
+    data[i + 1] += noise;
+    data[i + 2] += noise;
+  }
+  ctx.putImageData(imageData, 0, 0);
+
+  // 圆角遮罩
+  const radius = 20;
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.beginPath();
+  ctx.moveTo(radius, 0);
+  ctx.lineTo(width - radius, 0);
+  ctx.quadraticCurveTo(width, 0, width, radius);
+  ctx.lineTo(width, height - radius);
+  ctx.quadraticCurveTo(width, height, width - radius, height);
+  ctx.lineTo(radius, height);
+  ctx.quadraticCurveTo(0, height, 0, height - radius);
+  ctx.lineTo(0, radius);
+  ctx.quadraticCurveTo(0, 0, radius, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalCompositeOperation = "source-over";
+
+  // 标题文字
+  ctx.fillStyle = "#222";
+  ctx.font = "bold 26px system-ui, sans-serif";
+  ctx.textAlign = "center";
+
+  function wrapText(text, x, y, maxWidth, lineHeight) {
+    const chars = text.split("");
+    let line = "";
+    for (let c of chars) {
+      const test = line + c;
+      if (ctx.measureText(test).width > maxWidth) {
+        ctx.fillText(line, x, y);
+        line = c;
+        y += lineHeight;
+      } else {
+        line = test;
+      }
+    }
+    ctx.fillText(line, x, y);
+  }
+
+  wrapText(title, width / 2, height / 2 - 20, width * 0.8, 34);
+
+  // 分类标签
+  ctx.fillStyle = "rgba(0,0,0,0.65)";
+  ctx.font = "18px system-ui, sans-serif";
+  ctx.fillText(category, width / 2, height - 40);
+
+  // 返回 Base64 图片（微信浏览器 100% 支持）
+  return canvas.toDataURL("image/png");
+}
+
 
 
 /* -------------------------
