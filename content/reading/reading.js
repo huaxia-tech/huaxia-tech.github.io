@@ -544,6 +544,7 @@ async function generateLocalCover(title, category = "学习") {
 
 // 🟩 微信浏览器稳定版：generateLocalCover（最终版）
 async function generateLocalCover(title, category = "学习") {
+  console.log("generateLocalCover called:", title);
   const width = 256;
   const height = 384;
 
@@ -798,6 +799,7 @@ function initDailyQuote() {
    13. 文章分类系统
 ------------------------- */
 async function loadArticles() {
+  console.log("loadArticles start");
   const list = document.getElementById("book-list");
   if (!list) return;
 
