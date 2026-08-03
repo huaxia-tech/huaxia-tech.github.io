@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>微信封面测试</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <h1>微信封面测试</h1>
+  <img id="cover" alt="封面应该出现在这里">
+  <script>
+    (function () {
+      const width = 256;
+      const height = 384;
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+
+      // 简单背景
+      ctx.fillStyle = "orange";
+      ctx.fillRect(0, 0, width, height);
+
+      // 简单文字
+      ctx.fillStyle = "#000";
+      ctx.font = "24px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("微信测试封面", width / 2, height / 2);
+
+      // 用 JPEG，尽量小一点
+      const url = canvas.toDataURL("image/jpeg", 0.7);
+
+      const img = document.getElementById("cover");
+      img.src = url;
+    })();
+  </script>
+</body>
+</html>
