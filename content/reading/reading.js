@@ -33,8 +33,14 @@ window.onerror = function (msg, url, line, col, error) {
   document.body.appendChild(box);
 };
 
+// 🟩 一键清空所有阅读数据
+function resetAllReadingData() {
+  if (!confirm("确定要清空所有阅读数据吗？")) return;
 
-
+  localStorage.clear();
+  alert("已重置！");
+  location.reload();
+}
 
 let READING_MODE = localStorage.getItem("reading_mode") || "scroll"; 
 // 可选：scroll / paged

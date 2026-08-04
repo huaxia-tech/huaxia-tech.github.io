@@ -13,7 +13,9 @@
   <p>用文字和声音慢慢读世界</p>
 </div>
 <div id="daily-quote" class="daily-quote"></div>
-
+<button onclick="resetAllReadingData()" class="reset-btn">
+  🔄 重置阅读系统
+</button>
 <!-- 🏅 首页加搜索框模块 -->
 <h2>🔍 搜索文章</h2>
 <input id="search-input" class="search-input" placeholder="输入标题或简介关键字">
@@ -35,7 +37,11 @@
 <div id="book-list" class="book-list"></div>
 
 <!-- ⭐ 自动生成卡片 -->
-<script src="reading.js"></script>
+<!-- <script src="reading.js"></script> -->
+<!-- ✅ 可以，而且这是微信浏览器最有效、最强制的刷新方式 -->
+<script>
+  document.write('<script src="reading.js?v=' + Date.now() + '"><\/script>');
+</script>
 
 </body>
 </html>
