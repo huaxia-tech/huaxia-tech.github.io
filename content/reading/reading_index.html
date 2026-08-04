@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="reading.css">
 </head>
-<body>
+<body data-page="reading">
 
 <div id="menu-btn">⋮</div>
 <div id="menu-panel">
@@ -42,11 +42,15 @@
 <div id="book-list" class="book-list"></div>
 
 <!-- ⭐ 自动生成卡片 -->
-<!-- <script src="reading.js"></script> -->
+<!-- <script src="reading.js"></script>  -->
 <!-- ✅ 可以，而且这是微信浏览器最有效、最强制的刷新方式 -->
+ 
 <script>
-  document.write('<script src="reading.js?v=' + Date.now() + '"><\/script>');
+  const s = document.createElement("script");
+  s.src = "/content/reading/reading.js?v=" + Date.now();
+  document.body.appendChild(s);
 </script>
+
 
 </body>
 </html>

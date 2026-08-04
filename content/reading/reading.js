@@ -22,6 +22,28 @@
 // ⭐ 页面类型识别（首页 / 阅读页 / 设置中心）
 const PAGE_TYPE = document.body.dataset.page || "reading";
 
+function showCacheSize() {
+  const el = document.getElementById("cacheInfo");
+  if (!el) return;
+
+  let total = 0;
+  for (let key in localStorage) {
+    const value = localStorage.getItem(key);
+    total += value ? value.length : 0;
+  }
+
+  el.textContent = "📦 当前缓存大小：" + (total / 1024).toFixed(2) + " KB";
+}
+
+function showReadingSummary() {
+  const el = document.getElementById("readingSummary");
+  if (!el) return;
+
+  const history = JSON.parse(localStorage.getItem("reading_history") || "[]");
+  el.textContent = "📖 已阅读文章数量：" + history.length;
+}
+
+
 // ⭐ 全局错误提示（可保留）
 window.onerror = function (msg, url, line, col, error) {
   const box = document.createElement("div");
@@ -722,6 +744,8 @@ function saveReadingState() {
   localStorage.setItem("reading_history", JSON.stringify(filtered.slice(0, 20)));
 }
 
+
+/*
 function loadHistory() {
   const list = document.getElementById("recent-list");
   if (!list) return;
@@ -745,6 +769,45 @@ function loadHistory() {
     list.appendChild(div);
   });
 }
+*/
+
+
+/* -------------------------
+   🟩 完整可用的最近阅读（去重 + 按时间排序）
+------------------------- */
+function loadHistory() {
+  const list = document.getElementById("recent-list");
+  if (!list) return;
+
+  const history = JSON.parse(localStorage.getItem("reading_history") || "[]");
+
+  // ⭐ 去重：按文章 ID，只保留最新的一次阅读记录
+  const unique = {};
+  history.forEach(h => {
+    unique[h.id] = h; // 后写入的覆盖前面的 → 保留最新时间
+  });
+
+  // ⭐ 转成数组并按时间倒序排序
+  const sorted = Object.values(unique).sort((a, b) => b.time - a.time);
+
+  // ⭐ 渲染最近阅读
+  list.innerHTML = sorted.map(h => {
+    const timeKey = `reading_time_${h.id}`;
+    const seconds = Number(localStorage.getItem(timeKey) || 0);
+    const mins = Math.floor(seconds / 60);
+
+    return `
+      <div class="recent-item">
+        <p>
+          <a href="${h.id}.html">${h.title}</a>
+          · ${new Date(h.time).toLocaleString()}
+          · 阅读约 ${mins} 分钟
+        </p>
+      </div>
+    `;
+  }).join("");
+}
+
 
 /* -------------------------
    9. 阅读时长统计
@@ -789,7 +852,11 @@ function showAchievements() {
   const container = document.getElementById("achievements");
   if (!container) return;
 
-  const badges = JSON.parse(localStorage.getItem("reading_badges") || "[]") || calcAchievements();
+  //const badges = JSON.parse(localStorage.getItem("reading_badges") || "[]") || calcAchievements();
+  
+  let badges = JSON.parse(localStorage.getItem("reading_badges") || "[]");
+  // ⭐ 如果没有成就 → 重新计算
+  if (!badges.length) badges = calcAchievements();
 
   container.innerHTML = badges
     .map(b => `<span class="badge">${b}</span>`)
@@ -799,6 +866,7 @@ function showAchievements() {
 /* -------------------------
    11. 阅读排行榜
 ------------------------- */
+/*
 function loadRanking() {
   const container = document.getElementById("ranking");
   if (!container) return;
@@ -827,6 +895,47 @@ function loadRanking() {
     container.appendChild(div);
   });
 }
+*/
+
+
+/* ---------------------------------------
+   🟩 完整可用的排行榜（按文章 ID 去重）
+--------------------------------------- */
+function loadRanking() {
+  const ranking = document.getElementById("ranking");
+  if (!ranking) return;
+
+  const history = JSON.parse(localStorage.getItem("reading_history") || "[]");
+
+  // ⭐ 按文章 ID 统计次数（不会重复）
+  const count = {};
+  history.forEach(h => {
+    if (!count[h.id]) {
+      count[h.id] = {
+        id: h.id,
+        title: h.title,
+        times: 0
+      };
+    }
+    count[h.id].times++;
+  });
+
+  // ⭐ 排序（阅读次数从高到低）
+  //const sorted = Object.values(count).sort((a, b) => b.times - a.times);
+  // ⭐ 排序（阅读次数从高到低）限制数量（例如前 5 名）
+  const sorted = Object.values(count)
+  .sort((a, b) => b.times - a.times)
+  .slice(0, 5);
+
+
+  // ⭐ 渲染排行榜
+  ranking.innerHTML = sorted.map(item => `
+    <div class="rank-item">
+      <b><a href="${item.id}.html">${item.title}</a></b> — ${item.times} 次
+    </div>
+  `).join("");
+}
+
 
 /* -------------------------
    12. 每日一句
@@ -896,7 +1005,9 @@ async function loadArticles() {
 
       // ⭐ 阅读时长
       //const minutes = localStorage.getItem("minutes_" + a.id) || 0;
-      const minutes = Number(localStorage.getItem("minutes_" + a.id) || 0);
+      
+      //const minutes = Number(localStorage.getItem("minutes_" + a.id) || 0);
+      const minutes = Math.floor(Number(localStorage.getItem("reading_time_" + a.id) || 0) / 60);
 
       // ⭐ 评分（如果 JSON 没写，就默认 4.5）
       const rating = a.rating || 4.5;
@@ -1017,7 +1128,7 @@ function initSyncGithub() {
   };
 }
 
-
+// 主题
 function initTheme() {
   const btnKindle = document.getElementById("themeKindle");
   const btnWechat = document.getElementById("themeWechat");
@@ -1102,12 +1213,19 @@ function initReadingPage() {
   initFontSize();
   initReadingTimer();
   initDailyQuote();
+  
+  // ⭐⭐⭐ 所有 DOM 重建完毕后，再执行统计
+  loadArticles();      // 生成文章卡片（也会重建 DOM）
+  initSearch();
+  initSyncGithub();
+  
+  // ⭐⭐⭐ 最后执行统计（不会再被覆盖）
   loadHistory();
   showAchievements();
   loadRanking();
-  loadArticles();
-  initSearch();
-  initSyncGithub();
+  //loadArticles();
+  //initSearch();
+  //initSyncGithub();
 };
 
 
@@ -1121,6 +1239,10 @@ window.onload = () => {
   // ⭐ 设置中心页面：只执行主题和重置功能
   if (PAGE_TYPE === "settings") {
     initTheme();
+    
+    showCacheSize();
+    showReadingSummary();
+    
     return;
   }
   

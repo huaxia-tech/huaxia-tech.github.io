@@ -8,10 +8,6 @@
 </head>
 <body>
 
-<script>
-  const ARTICLE_ID = 'reading_0006';
-</script>
-
 <div class="article-header">
   <h1 id="article-title">同情心与为他人着想：优雅的核心（建霖总结版）</h1>
 
@@ -28,6 +24,32 @@
   <button id="btnSync">📤 同步阅读进度到 GitHub</button>
   <div id="sync-qrcode"></div>
 </div>
+
+<script>
+  //const ARTICLE_ID = 'reading_0006';  // ← 每篇文章唯一 ID
+  // ⭐ 每篇文章必须不同
+  const ARTICLE_ID = location.pathname.split("/").pop().replace(".html", "");
+  // ⭐ 自动从页面标题读取文章名
+  const ARTICLE_TITLE = document.getElementById("article-title").innerText;
+
+  // ⭐ 写入最近阅读记录
+  const history = JSON.parse(localStorage.getItem("reading_history") || "[]");
+
+  history.unshift({
+    id: ARTICLE_ID,
+    title: ARTICLE_TITLE,
+    time: Date.now()
+  });
+
+  localStorage.setItem("reading_history", JSON.stringify(history));
+
+  // ⭐ 写入阅读时长（示例：每 5 秒累加）
+  let seconds = 0;
+  setInterval(() => {
+    seconds++;
+    localStorage.setItem(`reading_time_${ARTICLE_ID}`, seconds);
+  }, 1000);
+</script>
 
 <div id="progress-bar"><div id="progress-inner"></div></div>
 

@@ -33,8 +33,11 @@
 
 <!-- <script src="reading.js?v=SETTINGS"></script> -->
 <script>
-  document.write('<script src="reading.js?v=' + Date.now() + '"><\/script>');
+  const s = document.createElement("script");
+  s.src = "reading.js?v=" + Date.now();
+  document.body.appendChild(s);
 </script>
+
 
 </body>
 </html>
