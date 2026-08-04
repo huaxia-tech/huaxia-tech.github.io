@@ -783,7 +783,8 @@ function loadHistory() {
 
   // ⭐ 去重：按文章 ID，只保留最新的一次阅读记录
   const unique = {};
-  history.forEach(h => {
+  //history.forEach(h => {
+  history.slice().reverse().forEach(h => {
     unique[h.id] = h; // 后写入的覆盖前面的 → 保留最新时间
   });
 
@@ -803,6 +804,10 @@ function loadHistory() {
           · ${new Date(h.time).toLocaleString()}
           · 阅读约 ${mins} 分钟
         </p>
+        
+        <button class="recent-read-btn" onclick="location.href='${h.id}.html'" hidden>
+          继续阅读
+        </button>
       </div>
     `;
   }).join("");
