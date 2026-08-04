@@ -11,21 +11,21 @@
     "title": "成语背后的智慧",
     "desc": "成语不是死记硬背，而是中国人的思维方式。",
     "category": "故事",
-    "cover": "cover2.jpg"
+    "cover": "/covers/cover2.jpg"
   },
   {
     "id": "reading_0003",
     "title": "文字里的温度",
     "desc": "文字看似冰冷，却能传递温度。",
     "category": "思考",
-    "cover": "cover3.jpg"
+    "cover": "/cover3.jpg"
   },
   {
     "id": "reading_0004",
     "title": "内在形象与个人品牌",
     "desc": "内在形象：真正决定你是谁。",
     "category": "思考",
-    "cover": "cover4.jpg"
+    "cover": "/cover4.jpg"
   },
   {
     "id": "reading_0005",
