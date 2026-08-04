@@ -973,6 +973,119 @@ async function coverExists(url) {
   }
 }
 
+// 🟩 第三步：添加评分函数（用户评分 → 自动更新）
+function rateArticle(articleId, userScore) {
+  const key = "rating_" + articleId;
+
+  // 旧评分（如果没有则为 4.5）
+  const oldRating = Number(localStorage.getItem(key) || 4.5);
+
+  // 新评分 = (旧评分 + 用户评分) / 2
+  const newRating = (oldRating + userScore) / 2;
+
+  // 存入 localStorage
+  localStorage.setItem(key, newRating.toFixed(2));
+
+  // 刷新页面显示最新评分
+  location.reload();
+}
+
+
+// 🟩 四、加入评分逻辑（JS）——可直接复制
+function initRatingUI() {
+  const box = document.querySelector(".rating-stars");
+  if (!box) return;
+
+  const articleId = box.dataset.articleId;
+  const key = "rating_" + articleId;
+
+  // 旧评分（如果没有则为 4.5）
+  let rating = Number(localStorage.getItem(key) || 4.5);
+
+  // ⭐ 初始化星星 DOM（一次性创建，不再 innerHTML 替换）
+  box.innerHTML = "";
+  for (let i = 1; i <= 5; i++) {
+    const star = document.createElement("span");
+    star.textContent = "★";
+    star.dataset.value = i;
+    box.appendChild(star);
+  }
+
+  // ⭐ 根据评分更新星星状态
+  function updateStars(score) {
+    box.querySelectorAll("span").forEach(star => {
+      //star.classList.toggle("active", Number(star.dataset.value) <= score);
+      const value = Number(star.dataset.value);
+      star.classList.remove("active", "half");
+
+      if (value <= score) {
+        star.classList.add("active");
+      } else if (value - score === 0.5) {
+        star.classList.add("half");
+      }
+    });
+  }
+
+  //updateStars(Math.round(rating));
+  updateStars(rating);
+
+  // ⭐ 鼠标移上去高亮
+  box.addEventListener("mousemove", e => {
+    //if (e.target.tagName === "SPAN") {
+      //const value = Number(e.target.dataset.value);
+      //updateStars(value);
+    //}
+    if (e.target.tagName !== "SPAN") return;
+
+    const rect = e.target.getBoundingClientRect();
+    const offset = e.clientX - rect.left;
+    const half = offset < rect.width / 2;
+
+    const value = Number(e.target.dataset.value);
+    const hoverScore = half ? value - 0.5 : value;
+
+    updateStars(hoverScore);
+  });
+
+  // ⭐ 鼠标移出恢复真实评分
+  box.addEventListener("mouseleave", () => {
+    //updateStars(Math.round(rating));
+    updateStars(rating);
+  });
+
+  // ⭐ 点击评分
+  box.addEventListener("click", e => {
+    if (e.target.tagName !== "SPAN") return;
+
+    //const userScore = Number(e.target.dataset.value);
+    // 新评分 = (旧评分 + 用户评分) / 2
+    //rating = (rating + userScore) / 2;
+    // 存入 localStorage
+    //localStorage.setItem(key, rating.toFixed(2));
+    // 更新显示
+    //updateStars(Math.round(rating));
+    
+    const rect = e.target.getBoundingClientRect();
+    const offset = e.clientX - rect.left;
+    const half = offset < rect.width / 2;
+
+    const value = Number(e.target.dataset.value);
+    const userScore = half ? value - 0.5 : value;
+
+    rating = (rating + userScore) / 2;
+    localStorage.setItem(key, rating.toFixed(2));
+
+    updateStars(rating);
+
+    // 刷新页面（让 reading_index 显示真实评分）
+    location.reload();
+  });
+}
+
+// ⭐ 初始化评分 UI
+//initRatingUI();
+// 🟩 四、加入评分逻辑（JS）——可直接复制
+
 
 /* -------------------------
    13. 文章分类系统
@@ -1040,7 +1153,16 @@ async function loadArticles() {
       const minutes = Math.floor(Number(localStorage.getItem("reading_time_" + a.id) || 0) / 60);
 
       // ⭐ 评分（如果 JSON 没写，就默认 4.5）
-      const rating = a.rating || 4.5;
+      //const rating = a.rating || 4.5;
+      
+      // ⭐ 真实评分系统
+      let baseRating = a.rating || 4.5;  // JSON 初始评分
+      let savedRating = Number(localStorage.getItem("rating_" + a.id) || 0);
+
+      // ⭐ 如果有用户评分 → 使用真实评分
+      let rating = savedRating > 0 ? savedRating : baseRating;
+      
+      // ⭐ 星星数量
       const stars = "★★★★★☆☆☆☆☆".slice(0, Math.round(rating));
 
       // ⭐ 卡片 HTML（微信读书风格）
@@ -1256,9 +1378,17 @@ function initReadingPage() {
   //loadArticles();
   //initSearch();
   //initSyncGithub();
+  
+  // ⭐⭐⭐ 再等一帧，让 DOM 完全稳定
+  // ⭐⭐⭐ 再等两帧，让所有异步 DOM 重建完成
+  setTimeout(() => {
+    requestAnimationFrame(() => {
+      console.log("initRatingUI running");
+      initRatingUI();
+    });
+  }, 0);
+
 };
-
-
 
 
 /* -------------------------
@@ -1279,3 +1409,10 @@ window.onload = () => {
   // 首页 + 阅读页
   initReadingPage();
 };
+
+
+// ⭐⭐ 初始化评分 UI（必须放在 reading.js 最底部）
+//document.addEventListener("DOMContentLoaded", () => {
+  //initRatingUI();
+//});
+

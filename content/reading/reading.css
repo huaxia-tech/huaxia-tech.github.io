@@ -501,3 +501,64 @@ body.theme-wechat .article-content {
 .recent-read-btn:hover {
   background: #45a049;
 }
+
+/* 🟩 三、加入评分 UI 的 CSS（漂亮、微信读书风格） */
+.rating-box, .rating-stars {
+  position: relative;
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+}
+
+.rating-stars span {
+  font-size: 32px;
+  cursor: pointer;
+  color: #ccc;
+  margin-right: 4px;   /* 用 margin 替代 letter-spacing */
+  user-select: none;
+  position: relative;
+}
+
+.rating-stars span.active {
+  color: gold;
+}
+
+.rating-stars span.half::after {
+  content: "★";
+  color: gold;
+  position: absolute;
+  left: 0;
+  width: 50%;
+  overflow: hidden;
+}
+
+.rating-text {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* ⭐ 正确：禁用真正的分页遮罩层（不是 pagedControls） */
+.page-wrapper {
+  pointer-events: none !important;
+}
+
+.page-wrapper * {
+  pointer-events: auto !important;
+}
+
+
+
+
+/* ⭐ 正确：只禁用分页遮罩层，不禁用整个文章区域 */
+/* .pagedControls { */
+/*   pointer-events: none !important; */
+/* } */
+
+/* ⭐ 解决分页模式遮挡星星的问题 */
+/* #articleContent { */
+/*   pointer-events: none !important; */
+/* } */
+
+/* #articleContent * { */
+/*   pointer-events: auto !important; */
+/* } */
