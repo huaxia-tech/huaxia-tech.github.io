@@ -958,6 +958,17 @@ function initDailyQuote() {
   el.textContent = quotes[index];
 }
 
+// 🟩 ① 添加一个“封面是否存在”检查函数（最小版本）
+async function coverExists(url) {
+  try {
+    const res = await fetch(url, { method: "HEAD" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+
 /* -------------------------
    13. 文章分类系统
 ------------------------- */
@@ -997,7 +1008,21 @@ async function loadArticles() {
       //cover = await generateLocalCover(a.title);
       
       // ⭐ 本地封面生成（渐变 + 纹理 + 圆角）
-      const cover = await generateLocalCover(a.title, a.category);
+      //const cover = await generateLocalCover(a.title, a.category);
+      // ⭐ 优先使用 articles.json 指定的封面
+      let cover = a.cover ? a.cover : null;
+
+      // ⭐ 如果封面不存在，则 fallback 到自动生成
+      //if (!cover) {
+        //cover = await generateLocalCover(a.title, a.category);
+      //}
+      // ⭐ 如果封面路径存在 → 使用真实封面
+      if (cover && await coverExists(cover)) {
+        // ok
+      } else {
+        // ⭐ 如果不存在 → fallback 到自动生成封面
+        cover = await generateLocalCover(a.title, a.category);
+      }
 
       // ⭐ 阅读进度
       //const progress = localStorage.getItem("progress_" + a.id) || 0;
