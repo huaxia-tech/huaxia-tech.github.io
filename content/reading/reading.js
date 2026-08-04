@@ -18,6 +18,11 @@
    ✔ GitHub 阅读进度同步（二维码）
    ✔ AI 封面图生成（含 fallback）
 --------------------------------------------------------- */
+
+// ⭐ 页面类型识别（首页 / 阅读页 / 设置中心）
+const PAGE_TYPE = document.body.dataset.page || "reading";
+
+// ⭐ 全局错误提示（可保留）
 window.onerror = function (msg, url, line, col, error) {
   const box = document.createElement("div");
   box.style.position = "fixed";
@@ -29,9 +34,26 @@ window.onerror = function (msg, url, line, col, error) {
   box.style.padding = "10px";
   box.style.fontSize = "14px";
   box.style.zIndex = "99999";
-  box.innerText = "JS错误: " + msg + " @ " + line + ":" + col;
+  box.innerText = "JS错误: " + msg;
   document.body.appendChild(box);
 };
+
+// 设置中心
+//document.getElementById("menu-btn").onclick = () => {
+  //const panel = document.getElementById("menu-panel");
+  //panel.style.display = (panel.style.display === "block") ? "none" : "block";
+//};
+
+// 顶部：菜单按钮只在有它的页面生效
+const menuBtn = document.getElementById("menu-btn");
+if (menuBtn) {
+  menuBtn.onclick = () => {
+    const panel = document.getElementById("menu-panel");
+    if (!panel) return;
+    panel.style.display = (panel.style.display === "block") ? "none" : "block";
+  };
+}
+
 
 // 🟩 一键清空所有阅读数据
 function resetAllReadingData() {
@@ -41,6 +63,13 @@ function resetAllReadingData() {
   alert("已重置！");
   location.reload();
 }
+
+// ✅ 方案 B：在 reading.js 里补一个 resetReadingSystem（推荐）
+// 设置中心页面的【 重置阅读系统（安全）按钮】
+function resetReadingSystem() {
+  resetAllReadingData();
+}
+
 
 let READING_MODE = localStorage.getItem("reading_mode") || "scroll"; 
 // 可选：scroll / paged
@@ -1053,12 +1082,11 @@ function applyModeCSS() {
 }
 
 
-/* -------------------------
-   16. 启动所有功能
-------------------------- */
-window.onload = () => {
+function initReadingPage() {
+  // ⭐ 以下是阅读页专用功能（首页 + 阅读页）
   initModeToggle();     // ⭐ 模式切换按钮
-   applyModeCSS();
+  applyModeCSS();
+
   if (READING_MODE === "scroll") {
     initScrollMode();   // ⭐ 滚动阅读模式
   } else {
@@ -1066,7 +1094,7 @@ window.onload = () => {
   }
 
   // 通用功能（两种模式都需要）
-  initTheme();
+  //initTheme();
   //showPageWithAnim(0, "next");
   initReading();
   initNightMode();
@@ -1080,4 +1108,22 @@ window.onload = () => {
   loadArticles();
   initSearch();
   initSyncGithub();
+};
+
+
+
+
+/* -------------------------
+   16. 启动所有功能
+------------------------- */
+window.onload = () => {
+
+  // ⭐ 设置中心页面：只执行主题和重置功能
+  if (PAGE_TYPE === "settings") {
+    initTheme();
+    return;
+  }
+  
+  // 首页 + 阅读页
+  initReadingPage();
 };
