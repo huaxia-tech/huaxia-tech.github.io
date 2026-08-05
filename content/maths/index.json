@@ -8,7 +8,7 @@
   },
   {
     "id": "shuxueleyuan",
-    "title": "数学乐园",
+    "title": "math-practice_0000",
     "icon": "🎈 ",
     "url": "https://maths3.github.io/",
     "desc": "数学乐园"
@@ -19,6 +19,13 @@
     "icon": "🔗",
     "url": "https://maths3.github.io/talent_0000.html",
     "desc": "天才基本法之入门级"
+  },
+  {
+    "id": "math-practice_0002",
+    "title": "数学乐园之骰子",
+    "icon": "🎲",
+    "url": "https://always001.github.io/math-practice_0002.html",
+    "desc": "数学乐园之骰子"
   },
   {
     "id": "talent",
