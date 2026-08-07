@@ -91,35 +91,45 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
   //const SUPABASE_ANON_KEY = "你的 anon key"; // ← 记得填入你的 anon key
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBldXZnZHRvcmVsaWZjbmR6c3hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwODI3NTYsImV4cCI6MjEwMTY1ODc1Nn0.0_6JsRHbRk_zyajw2eFmWFWfXGkZTozNJhrxGZlB9no"; // ← 记得填入你的 anon key
 
+  // ⭐ 使用 fetch 上传（Supabase Edge Function 能正确解析）
   const formData = new FormData();
   formData.append("file", selectedFile);
 
-  // ⭐ 使用 XMLHttpRequest 实现进度条 + fetch 的正确 FormData 上传
-  const xhr = new XMLHttpRequest();
-  xhr.open("POST", uploadUrl);
-  xhr.setRequestHeader("Authorization", "Bearer " + SUPABASE_ANON_KEY);
+  // ⭐ fetch 无法原生显示进度 → 使用 ReadableStream 手动实现进度条
+  const totalSize = selectedFile.size;
+  let uploaded = 0;
 
-  xhr.upload.onprogress = (e) => {
-    if (e.lengthComputable) {
-      const percent = Math.round((e.loaded / e.total) * 100);
+  const stream = selectedFile.stream();
+  const reader = stream.getReader();
+
+  const uploadStream = new ReadableStream({
+    async pull(controller) {
+      const chunk = await reader.read();
+      if (chunk.done) {
+        controller.close();
+        return;
+      }
+      uploaded += chunk.value.length;
+      const percent = Math.round((uploaded / totalSize) * 100);
       progressBar.style.width = percent + "%";
       progressBar.textContent = percent + "%";
+      controller.enqueue(chunk.value);
     }
-  };
+  });
 
-  xhr.onload = () => {
-    if (xhr.status === 200) {
-      status.innerHTML = '<div class="alert alert-success">上传成功！</div>';
-    } else {
-      status.innerHTML = '<div class="alert alert-danger">上传失败：' + xhr.status + '</div>';
-    }
-  };
+  const res = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+    },
+    body: uploadStream
+  });
 
-  xhr.onerror = () => {
-    status.innerHTML = '<div class="alert alert-danger">上传失败：网络错误</div>';
-  };
-
-  xhr.send(formData);
+  if (res.ok) {
+    status.innerHTML = '<div class="alert alert-success">上传成功！</div>';
+  } else {
+    status.innerHTML = '<div class="alert alert-danger">上传失败：' + res.status + '</div>';
+  }
 });
 </script>
 
