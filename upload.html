@@ -94,6 +94,9 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
 
   const xhr = new XMLHttpRequest();
   xhr.open("POST", uploadUrl);
+  
+  // ⭐ 必须加这个，否则永远卡住
+  xhr.setRequestHeader("Authorization", "Bearer " + SUPABASE_ANON_KEY);
 
   xhr.upload.onprogress = (e) => {
     if (e.lengthComputable) {
