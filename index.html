@@ -952,5 +952,30 @@ window.addEventListener("DOMContentLoaded", async () => {
 </script>
 <!-- ✨ 访问记录追踪器 - 100% 独立工作 -->
 <script src="js/visit-tracker.js"></script>
+<script>
+(async () => {
+  try {
+    const ipInfo = await fetch("https://ipwho.is").then(r => r.json());
+
+    await fetch("https://huaxia-nginx-proxy-production.up.railway.app/api/records/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ip: ipInfo.ip,
+        country: ipInfo.country,
+        region: ipInfo.region,
+        city: ipInfo.city,
+        url: location.pathname,
+        referrer: document.referrer || "未知",
+        pageTitle: document.title
+      })
+    });
+
+    console.log("访问记录已上传");
+  } catch (err) {
+    console.log("访问记录上传失败:", err);
+  }
+})();
+</script>
 </body>
 </html>
