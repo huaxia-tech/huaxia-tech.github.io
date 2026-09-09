@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>西班牙语听写</title>
+<style>
+  body {
+    font-family: Arial;
+    padding: 20px;
+    background: #f7f7f7;
+  }
+  .box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #ddd;
+    max-width: 500px;
+    margin: auto;
+  }
+  button {
+    padding: 10px 20px;
+    margin: 10px 0;
+    font-size: 16px;
+  }
+  input {
+    width: 100%;
+    padding: 10px;
+    font-size: 18px;
+    margin-top: 10px;
+  }
+  #result {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h2>西班牙语听写练习</h2>
+
+  <button onclick="playSentence()">▶ 播放句子</button>
+
+  <input id="answer" placeholder="请输入你听到的内容">
+
+  <button onclick="checkAnswer()">检查答案</button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+  // 西班牙语句子库
+  const sentences = [
+    "Hola, ¿cómo estás?",
+    "Me llamo Juan.",
+    "Vivo en Madrid.",
+    "¿Dónde está el baño?",
+    "Quiero aprender español.",
+    "Muchas gracias por tu ayuda.",
+    "¿Puedes repetir, por favor?",
+    "Hoy es un buen día."
+  ];
+
+  let current = "";
+
+  function playSentence() {
+    // 随机选择一句
+    current = sentences[Math.floor(Math.random() * sentences.length)];
+
+    const utter = new SpeechSynthesisUtterance(current);
+    utter.lang = "es-ES"; // 西班牙语发音
+    utter.rate = 0.9;     // 稍微慢一点，方便听写
+
+    speechSynthesis.speak(utter);
+
+    document.getElementById("result").innerHTML = "句子已播放，请听写…";
+  }
+
+  function checkAnswer() {
+    const user = document.getElementById("answer").value.trim();
+
+    if (!current) {
+      document.getElementById("result").innerHTML = "请先点击播放句子。";
+      return;
+    }
+
+    if (user.toLowerCase() === current.toLowerCase()) {
+      document.getElementById("result").innerHTML = "✔ 完全正确！";
+    } else {
+      document.getElementById("result").innerHTML =
+        "❌ 不完全正确<br>正确答案是：<br><b>" + current + "</b>";
+    }
+  }
+</script>
+
+</body>
+</html>

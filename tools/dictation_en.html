@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>英语听写</title>
+  <style>
+    body { font-family: system-ui; padding: 20px; background: #0f172a; color: #e5e7eb; }
+    .word-input { width: 100%; padding: 8px; margin-top: 10px; border-radius: 6px; border: none; }
+    button { margin-top: 10px; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; }
+    .check-result { margin-top: 10px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>英语听写</h1>
+  <p>点击「播放」听单词，然后在下面输入你听到的内容。</p>
+
+  <div>
+    <button id="play">播放单词</button>
+    <button id="next">下一个</button>
+  </div>
+
+  <input id="answer" class="word-input" placeholder="在这里输入你听到的英文单词">
+  <button id="check">检查答案</button>
+
+  <div id="result" class="check-result"></div>
+
+  <script>
+    const words = ['apple', 'banana', 'computer', 'language', 'teacher', 'student', 'dictionary'];
+    let current = '';
+
+    function speak(text) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'en-US';
+      speechSynthesis.speak(utter);
+    }
+
+    function nextWord() {
+      current = words[Math.floor(Math.random() * words.length)];
+      document.getElementById('result').textContent = '';
+      speak(current);
+    }
+
+    document.getElementById('play').onclick = () => {
+      if (!current) nextWord();
+      else speak(current);
+    };
+
+    document.getElementById('next').onclick = () => nextWord();
+
+    document.getElementById('check').onclick = () => {
+      const ans = document.getElementById('answer').value.trim().toLowerCase();
+      if (!current) {
+        document.getElementById('result').textContent = '请先点击「播放」或「下一个」获取单词。';
+        return;
+      }
+      if (ans === current.toLowerCase()) {
+        document.getElementById('result').textContent = '✅ 正确！';
+      } else {
+        document.getElementById('result').textContent = `❌ 错误，正确答案是：${current}`;
+      }
+    };
+
+    // 初始给一个单词
+    nextWord();
+  </script>
+</body>
+</html>
+
