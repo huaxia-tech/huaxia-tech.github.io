@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>外汇速查</title>
+<title>外汇速查（在线 + 离线）</title>
 <style>
   body {
     font-family: Arial;
@@ -32,7 +32,7 @@
 <body>
 
 <div class="box">
-  <h2>外汇速查（实时汇率）</h2>
+  <h2>外汇速查（实时 + 本地兜底）</h2>
 
   <div>
     <label>金额：</label>
@@ -76,25 +76,44 @@
       return;
     }
 
+    // 在线 API 地址
+    const apiUrl = `https://api.exchangerate.host/latest?base=${from}&symbols=${to}`;
+
     try {
-      // 使用 exchangerate.host 免费 API
-      const url = `https://api.exchangerate.host/latest?base=${from}&symbols=${to}`;
-      const res = await fetch(url);
+      // 尝试在线获取
+      const res = await fetch(apiUrl);
       const data = await res.json();
 
-      if (!data.rates || !data.rates[to]) {
-        resultDiv.innerHTML = "获取汇率失败。";
+      if (data.rates && data.rates[to]) {
+        const rate = data.rates[to];
+        const converted = amount * rate;
+
+        resultDiv.innerHTML =
+          `${amount} ${from} ≈ ${converted.toFixed(4)} ${to}<br>` +
+          `实时汇率：1 ${from} = ${rate.toFixed(6)} ${to}`;
         return;
       }
-
-      const rate = data.rates[to];
-      const converted = amount * rate;
-
-      resultDiv.innerHTML =
-        `${amount} ${from} ≈ ${converted.toFixed(4)} ${to}<br>` +
-        `当前汇率：1 ${from} = ${rate.toFixed(6)} ${to}`;
     } catch (e) {
-      resultDiv.innerHTML = "网络或接口错误，稍后再试。";
+      console.log("在线汇率失败，使用本地 JSON");
+    }
+
+    // 在线失败 → 使用本地 JSON
+    try {
+      const localRes = await fetch("forex_local.json");
+      const localData = await localRes.json();
+
+      if (localData[from] && localData[from][to]) {
+        const rate = localData[from][to];
+        const converted = amount * rate;
+
+        resultDiv.innerHTML =
+          `${amount} ${from} ≈ ${converted.toFixed(4)} ${to}<br>` +
+          `本地汇率：1 ${from} = ${rate}`;
+      } else {
+        resultDiv.innerHTML = "本地汇率表中没有该币种组合。";
+      }
+    } catch (e) {
+      resultDiv.innerHTML = "无法读取本地汇率表。";
     }
   }
 </script>
