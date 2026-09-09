@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>德语听写</title>
+<style>
+  body {
+    font-family: Arial;
+    padding: 20px;
+    background: #f7f7f7;
+  }
+  .box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #ddd;
+    max-width: 500px;
+    margin: auto;
+  }
+  button {
+    padding: 10px 20px;
+    margin: 10px 0;
+    font-size: 16px;
+  }
+  input {
+    width: 100%;
+    padding: 10px;
+    font-size: 18px;
+    margin-top: 10px;
+  }
+  #result {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h2>德语听写练习</h2>
+
+  <button onclick="playSentence()">▶ 播放句子</button>
+
+  <input id="answer" placeholder="请输入你听到的内容">
+
+  <button onclick="checkAnswer()">检查答案</button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+  // 德语句子库
+  const sentences = [
+    "Guten Morgen.",
+    "Wie geht es dir?",
+    "Ich heiße Anna.",
+    "Ich wohne in Berlin.",
+    "Wo ist der Bahnhof?",
+    "Ich möchte Deutsch lernen.",
+    "Vielen Dank für deine Hilfe.",
+    "Kannst du das bitte wiederholen?",
+    "Heute ist ein schöner Tag."
+  ];
+
+  let current = "";
+
+  function playSentence() {
+    current = sentences[Math.floor(Math.random() * sentences.length)];
+
+    const utter = new SpeechSynthesisUtterance(current);
+    utter.lang = "de-DE"; // 德语发音
+    utter.rate = 0.9;
+
+    speechSynthesis.speak(utter);
+
+    document.getElementById("result").innerHTML = "句子已播放，请听写…";
+  }
+
+  function checkAnswer() {
+    const user = document.getElementById("answer").value.trim();
+
+    if (!current) {
+      document.getElementById("result").innerHTML = "请先点击播放句子。";
+      return;
+    }
+
+    if (user.toLowerCase() === current.toLowerCase()) {
+      document.getElementById("result").innerHTML = "✔ 完全正确！";
+    } else {
+      document.getElementById("result").innerHTML =
+        "❌ 不完全正确<br>正确答案是：<br><b>" + current + "</b>";
+    }
+  }
+</script>
+
+</body>
+</html>

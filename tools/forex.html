@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>外汇速查</title>
+<style>
+  body {
+    font-family: Arial;
+    padding: 20px;
+    background: #f7f7f7;
+  }
+  .box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #ddd;
+    max-width: 500px;
+    margin: auto;
+  }
+  select, input, button {
+    padding: 8px;
+    font-size: 16px;
+    margin: 5px 0;
+  }
+  #result {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h2>外汇速查（实时汇率）</h2>
+
+  <div>
+    <label>金额：</label>
+    <input id="amount" type="number" value="100">
+  </div>
+
+  <div>
+    <label>从：</label>
+    <select id="from">
+      <option value="USD">美元 USD</option>
+      <option value="EUR">欧元 EUR</option>
+      <option value="JPY">日元 JPY</option>
+      <option value="CNY">人民币 CNY</option>
+    </select>
+  </div>
+
+  <div>
+    <label>到：</label>
+    <select id="to">
+      <option value="CNY">人民币 CNY</option>
+      <option value="USD">美元 USD</option>
+      <option value="EUR">欧元 EUR</option>
+      <option value="JPY">日元 JPY</option>
+    </select>
+  </div>
+
+  <button onclick="convert()">查询汇率并换算</button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+  async function convert() {
+    const amount = parseFloat(document.getElementById("amount").value || "0");
+    const from = document.getElementById("from").value;
+    const to = document.getElementById("to").value;
+    const resultDiv = document.getElementById("result");
+
+    if (!amount || amount <= 0) {
+      resultDiv.innerHTML = "请输入有效金额。";
+      return;
+    }
+
+    try {
+      // 使用 exchangerate.host 免费 API
+      const url = `https://api.exchangerate.host/latest?base=${from}&symbols=${to}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!data.rates || !data.rates[to]) {
+        resultDiv.innerHTML = "获取汇率失败。";
+        return;
+      }
+
+      const rate = data.rates[to];
+      const converted = amount * rate;
+
+      resultDiv.innerHTML =
+        `${amount} ${from} ≈ ${converted.toFixed(4)} ${to}<br>` +
+        `当前汇率：1 ${from} = ${rate.toFixed(6)} ${to}`;
+    } catch (e) {
+      resultDiv.innerHTML = "网络或接口错误，稍后再试。";
+    }
+  }
+</script>
+
+</body>
+</html>
