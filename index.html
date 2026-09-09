@@ -469,6 +469,41 @@ class HuaXiaApp {
               <text x="20" y="24" font-size="12" font-weight="bold" fill="#06B6D4">÷</text>
             </svg>
             `;
+      const svgTools = `
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect x="2" y="2" width="28" height="28" rx="6" fill="white" opacity="0.25"/>
+              <!-- 工具箱主体 -->
+              <rect x="6" y="12" width="20" height="12" rx="3" stroke="white" stroke-width="2" fill="none"/>
+              <rect x="10" y="6" width="12" height="6" rx="2" stroke="white" stroke-width="2" fill="none"/>
+              <!-- 书本（语言工具） -->
+              <path d="M9 14 h6 v6 h-6 z" stroke="white" stroke-width="2" fill="none"/>
+              <!-- 代码符号（编程工具） -->
+              <text x="18" y="18" font-size="10" font-weight="bold" fill="white">{ }</text>
+              <!-- 放大镜（查字典/速查工具） -->
+              <circle cx="20" cy="23" r="3" stroke="white" stroke-width="2" fill="none"/>
+              <line x1="22.5" y1="25.5" x2="25" y2="28" stroke="white" stroke-width="2"/>
+            </svg>
+            `;
+      const svgDictationEn = `
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect x="2" y="2" width="28" height="28" rx="6" fill="white" opacity="0.25"/>
+              <circle cx="12" cy="16" r="5" stroke="white" stroke-width="2" fill="none"/>
+              <circle cx="20" cy="16" r="5" stroke="white" stroke-width="2" fill="none"/>
+              <path d="M10 11 C10 8 14 6 16 6 C18 6 22 8 22 11" stroke="white" stroke-width="2" fill="none"/>
+              <path d="M16 18 v6" stroke="white" stroke-width="2"/>
+              <path d="M18 20 v4" stroke="white" stroke-width="2"/>
+            </svg>
+            `;
+      const svgSpanishDictation = `
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect x="2" y="2" width="28" height="28" rx="6" fill="white" opacity="0.25"/>
+              <circle cx="11" cy="18" r="4" stroke="white" stroke-width="2" fill="none"/>
+              <circle cx="21" cy="18" r="4" stroke="white" stroke-width="2" fill="none"/>
+              <path d="M11 14 C11 10 16 8 21 14" stroke="white" stroke-width="2" fill="none"/>
+              <text x="13" y="26" font-size="12" font-weight="bold" fill="white">ñ</text>
+            </svg>
+            `;
+
       const cats = [
         { id: 'festivals', name: '传统节日', icon: '🎊', color: '#e74c3c' },
         { id: 'heroes', name: '历史人物', icon: '🦸', color: '#3498db' },
@@ -478,6 +513,48 @@ class HuaXiaApp {
         { id: 'food', name: '美食文化', icon: '🥟', color: '#e67e22' },
         { id: 'games', name: '语文游戏', icon: svgGames, color: '#8B5CF6' },
         { id: 'maths', name: '数学之窗', icon: svgMaths, color: '#06B6D4' },
+        { id: 'tools', name: '学习工具', icon: svgTools, color: '#7C3AED' },
+      ];
+
+      // 工具分类（新增）
+      const toolGroups = [
+        {
+          id: 'languages',
+          name: '语言工具',
+          items: [
+            { id: 'dictation_en', name: '英语听写' },
+            { id: 'dictation_es', name: '西班牙语听写' },
+            { id: 'dictation_de', name: '德语听写' },
+            { id: 'dictation_jp', name: '日语听写' },
+            { id: 'dictionary', name: '查字典' },
+          ]
+        },
+        {
+          id: 'coding',
+          name: '编程工具',
+          items: [
+            { id: 'java', name: 'Java 工具' },
+            { id: 'python', name: 'Python 工具' },
+            { id: 'c_lang', name: 'C 语言工具' },
+          ]
+        },
+        {
+          id: 'math',
+          name: '数学速算',
+          items: [
+            { id: 'quick_calc', name: '速算工具' },
+            { id: 'unit_convert', name: '单位换算' },
+          ]
+        },
+        {
+          id: 'daily',
+          name: '日常工具',
+          items: [
+            { id: 'forex', name: '外汇速查' },
+            { id: 'food_conflict', name: '食物相克查询' },
+            { id: 'office', name: '办公效率工具' },
+          ]
+        }
       ];
       // ③ ⭐⭐ 在这里放渲染分类的代码 ⭐⭐
       /*
@@ -744,7 +821,19 @@ class HuaXiaApp {
                      { id: 'math-practice_0002', title: '数学乐园之骰子', url: 'https://always001.github.io/math-practice_0002.html', icon: '🎲'},
                      { id: 'math-practice_0003', title: '方格填数闯关', url: 'https://maths3.github.io/math-practice_0003.html', icon: '🧩'},
                      { id: 'math-practice_0004', title: '数学乐园·算24点', url: 'https://maths3.github.io/math-practice_0004.html', icon: '🎮'},
-                     { id: 'talent', title: '天才基本法', url: 'https://always001.github.io/github.io/talent.html',icon: '🎓'}]}[cat] || [];
+                     { id: 'talent', title: '天才基本法', url: 'https://always001.github.io/github.io/talent.html',icon: '🎓'}],
+             tools: [
+                     { id: 'dictation_en', title: '英语听写', url: 'https://always001.github.io/english-system/dictation.html', icon: '🔊' },
+                     { id: 'dictation_es', title: '西班牙语听写', url: 'tools/dictation_es.html', icon: svgSpanishDictation },
+                     { id: 'dictation_de', title: '德语听写', url: 'tools/dictation_de.html', icon: '🇩🇪' },
+                     { id: 'dictation_jp', title: '日语听写', url: 'tools/dictation_jp.html', icon: '🈺' },
+                     { id: 'dictionary', title: '查字典', url: 'tools/dictionary.html', icon: '📚' },
+                     { id: 'java', title: 'Java 工具', url: 'tools/java.html', icon: '☕' },
+                     { id: 'python', title: 'Python 工具', url: 'tools/python.html', icon: '🐍' },
+                     { id: 'c_lang', title: 'C 语言工具', url: 'tools/c_lang.html', icon: '💻' },
+                     { id: 'forex', title: '外汇速查', url: 'tools/forex.html', icon: '💱' },
+                     { id: 'food_conflict', title: '食物相克查询', url: 'tools/food_conflict.html', icon: '🍽️' }]
+                     }[cat] || [];
   }
 
   async openArticle(cat, id) {
