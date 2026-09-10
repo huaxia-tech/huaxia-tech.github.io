@@ -142,17 +142,32 @@
   // 基础请求函数：USD<->CNY 走 Frankfurter，其它走 biquote
   async function fetchRate(base, quote) {
     // 特殊处理：USD 和 CNY 互转使用 Frankfurter 接口
+    // 特殊处理：USD 和 CNY 互转，使用 Cloudflare Workers 代理接口获取实时汇率
     if ((base === "USD" && quote === "CNY") || (base === "CNY" && quote === "USD")) {
       try {
-        const res = await fetch(`https://api.frankfurter.dev/v1/latest?from=${base}&to=${quote}`);
+        const proxy = "https://rate-usdcny.gankenrin.workers.dev/";
+        const res = await fetch(proxy);
+
         if (res.ok) {
-          const data = await res.json();
-          if (data && data.rates && data.rates[quote]) {
-            return data.rates[quote];
+          const text = await res.text(); // 1. 一旦テキストとして取得して空文字チェック
+          if (text && text.trim() !== "") {
+            const data = JSON.parse(text); // 2. 安全に JSON 解析
+            // 数据解析结构：兼容不同 Workers 返回的数据结构
+            const rawPrice = data?.data?.[0]?.price || data?.price || data?.rate;
+
+            if (rawPrice && !isNaN(rawPrice)) {
+              const usdToCny = parseFloat(rawPrice);
+              console.log("USDCNY:", usdToCny);
+
+              // USD -> CNY はそのまま、CNY -> USD は逆数 (1 / rate)
+              return base === "USD" ? usdToCny : (1 / usdToCny);
+            }
           }
+        } else {
+          console.warn("Workers 代理响应异常, 状态码:", res.status);
         }
       } catch (e) {
-        console.warn("Frankfurter API 异常", e);
+        console.warn("Workers 汇率 API 解析异常:", e);
       }
     }
 
