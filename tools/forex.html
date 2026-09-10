@@ -76,29 +76,51 @@
       return;
     }
 
-    // 在线 API 地址
-    const apiUrl = `https://api.exchangerate.host/latest?base=${from}&symbols=${to}`;
+    if (from === to) {
+      resultDiv.innerHTML = `${amount} ${from} = ${amount.toFixed(4)} ${to}<br>汇率：1 ${from} = 1`;
+      return;
+    }
 
     try {
-      // 尝试在线获取
-      const res = await fetch(apiUrl);
-      const data = await res.json();
+      // 优先级 1：直接通过 API 获取（如 JPY -> CNY，若直接支持）
+      let rate = await fetchRate(from, to);
 
-      if (data.rates && data.rates[to]) {
-        const rate = data.rates[to];
+      // 优先级 2：反向获取并取倒数（如 CNY -> JPY，转为 1 / (JPY -> CNY)）
+      if (!rate) {
+        const reverseRate = await fetchRate(to, from);
+        if (reverseRate) {
+          rate = 1 / reverseRate;
+        }
+      }
+
+      // 优先级 3：通过 USD 进行交叉换算（核心逻辑）
+      // 例如：JPY -> CNY，先算 JPY -> USD，再算 USD -> CNY
+      if (!rate && from !== "USD" && to !== "USD") {
+        console.log(`正在尝试通过 USD 中介交叉计算 ${from} -> ${to}...`);
+        
+        const fromToUsd = await getRateWithReverse(from, "USD"); // 获得 1 from = ? USD
+        const usdToTarget = await getRateWithReverse("USD", to);  // 获得 1 USD = ? to
+
+        if (fromToUsd && usdToTarget) {
+          rate = fromToUsd * usdToTarget; // 拼接算得 1 from = ? to
+        }
+      }
+
+      // 在线汇率（直连/反向/交叉）计算成功并展示
+      if (rate) {
         const converted = amount * rate;
-
         resultDiv.innerHTML =
           `${amount} ${from} ≈ ${converted.toFixed(4)} ${to}<br>` +
           `实时汇率：1 ${from} = ${rate.toFixed(6)} ${to}`;
         return;
       }
     } catch (e) {
-      console.log("在线汇率失败，使用本地 JSON");
+      console.warn("在线查询或交叉计算异常，准备走本地 JSON 兜底:", e);
     }
 
-    // 在线失败 → 使用本地 JSON
+    // 优先级 4：最后的最后才走本地 JSON 兜底
     try {
+      console.log("在线获取失败，触发本地 JSON 兜底");
       const localRes = await fetch("forex_local.json");
       const localData = await localRes.json();
 
@@ -115,6 +137,53 @@
     } catch (e) {
       resultDiv.innerHTML = "无法读取本地汇率表。";
     }
+  }
+
+  // 基础请求函数：USD<->CNY 走 Frankfurter，其它走 biquote
+  async function fetchRate(base, quote) {
+    // 特殊处理：USD 和 CNY 互转使用 Frankfurter 接口
+    if ((base === "USD" && quote === "CNY") || (base === "CNY" && quote === "USD")) {
+      try {
+        const res = await fetch(`https://api.frankfurter.dev/v1/latest?from=${base}&to=${quote}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.rates && data.rates[quote]) {
+            return data.rates[quote];
+          }
+        }
+      } catch (e) {
+        console.warn("Frankfurter API 异常", e);
+      }
+    }
+
+    // 默认处理：其它币种走 biquote 接口
+    try {
+      const symbolKey = `${base}${quote}`;
+      const res = await fetch(`https://biquote.io/api/latest?symbols=${symbolKey}`);
+      if (!res.ok) return null;
+
+      const data = await res.json();
+      if (data && data[symbolKey]) {
+        const item = data[symbolKey];
+        const val = item.mid || item.bid || item.ask || item.last;
+        if (val && !isNaN(val)) {
+          return val;
+        }
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
+  }
+
+  // 辅助方法：保证能拿到某币种与 USD 的汇率（正查不到就查反向取倒数）
+  async function getRateWithReverse(base, quote) {
+    let rate = await fetchRate(base, quote);
+    if (!rate) {
+      const rev = await fetchRate(quote, base);
+      if (rev) rate = 1 / rev;
+    }
+    return rate;
   }
 </script>
 
