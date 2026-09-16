@@ -186,6 +186,114 @@ window.GH = {
     margin: 0 auto;
   }
 
+  .pinyin {
+    /* font-family: 'Zhi Mang Xing', cursive !important; */
+    position: absolute;
+    top: -14px;
+    left: 92px;
+    color: red;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  /* 1. “骰”字包裹层 */
+  .pretty-tip {
+    position: relative !important;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    color: #e74c3c;
+    font-weight: bold;
+    /* 优雅的波浪下划线 */
+    border-bottom: 2px dashed #e74c3c;
+    padding-bottom: 1px;
+  }
+
+  /* 2. 精致的问号小角标 */
+  .pretty-tip .tip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-left: 2px;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: bold;
+    color: #ffffff;
+    background: linear-gradient(135deg, #ff7675, #d63031);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(214, 48, 49, 0.3);
+    vertical-align: middle;
+    transition: transform 0.2s ease;
+  }
+
+  /* 悬停时问号微动放大 */
+  .pretty-tip:hover .tip-icon {
+    transform: scale(1.15) rotate(12deg);
+  }
+
+  /* 2. 美化提示气泡（支持换行） */
+  .pretty-tip::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 135%; /* 悬浮在文字上方 */
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    
+    width: max-content;
+    max-width: 210px;
+    padding: 10px 14px;
+    
+    /* 深色半透明渐变背景 + 圆角 + 阴影 */
+    background: linear-gradient(135deg, #2d3436, #000000);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: normal;
+    line-height: 1.6;
+    text-align: left;
+    
+    /* 💡 核心：允许 \n 换行 */
+    white-space: pre-line;
+    
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    /* 隐藏状态动画 */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 9999 !important;
+  }
+  
+  /* 气泡指示小三角 */
+  .pretty-tip::before {
+    content: '';
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    border-width: 6px 6px 0 6px;
+    border-style: solid;
+    border-color: #2d3436 transparent transparent transparent;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 99999 !important;
+  }
+
+  /* 3. 悬停触发显示与微浮动动画 */
+  /* 悬停淡入并向上浮动 */
+  .pretty-tip:hover::after,
+  .pretty-tip:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+
 </style>
 </head>
 <body>
@@ -566,7 +674,30 @@ class HuaXiaApp {
         </div>
       `).join('');
       */
-      // ③ 渲染分类卡片（同时支持 SVG / emoji + 点击）
+      // 1. 确保全局只有一个顶层 Tips 提示框（直接挂在 body，不被任何卡片遮挡裁切）
+      let globalTip = document.getElementById('global-pinyin-tip');
+      if (!globalTip) {
+        globalTip = document.createElement('div');
+        globalTip.id = 'global-pinyin-tip';
+        Object.assign(globalTip.style, {
+          position: 'fixed',
+          display: 'none',
+          backgroundColor: '#222222',
+          color: '#ffffff',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          fontSize: '12px',
+          lineHeight: '1.5',
+          width: '210px',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+          zIndex: '999999',
+          pointerEvents: 'none',
+          transition: 'opacity 0.15s ease'
+        });
+        document.body.appendChild(globalTip);
+      }
+
+      // ② 渲染分类卡片
       const cc = document.getElementById('categories');
       if (cc) {
         cc.innerHTML = ''; // 先清空，避免重复
@@ -576,14 +707,47 @@ class HuaXiaApp {
           card.className = 'category-card';
           card.style.background = c.color;
           
-          //card.innerHTML = `<div class="icon">${c.icon}</div><h3>${c.name}</h3>`;
-          // 用 cat-icon + cat-name，统一结构，方便加样式
+          // 1. 获取标题内容（兼容 title 或 name）
+          let titleText = c.title || c.name || '';
+
+          // 2. 如果存在 pinyin 字段，并且标题中包含“骰”字
+          if (c.pinyin && titleText.includes('骰')) {
+            const py = c.pinyin.split(' ')[0]; // tóu
+            const tipText = '色子（读音：shǎi zi），又称骰子（读音：tóu zi），是一种用于麻将、桌面游戏乃至赌博的常见用具。';
+            
+            // 💡 关键：给 span 设置 title 属性，并强制加上 pointer-events: auto 和 cursor: help
+            const rubyWithTip = `
+              <span class="pinyin-tip-target" 
+                    title="${tipText}" 
+                    style="cursor: help !important; pointer-events: auto !important; border-bottom: 2px dashed #e74c3c; display: inline-block;">
+                <ruby style="pointer-events: auto !important; cursor: help !important;">
+                  骰<rt style="pointer-events: auto !important; cursor: help !important;">${py}</rt>
+                </ruby>
+              </span>
+            `;
+            titleText = titleText.replace('骰', rubyWithTip);
+          }
+          
+          // 3. 渲染到 DOM 中
           card.innerHTML = `
             <div class="cat-icon">${c.icon}</div>
-            <div class="cat-name">${c.name}</div>
+            <div class="cat-name">${titleText}</div>
           `;
-          card.onclick = () => this.renderCategory(c);
+          //card.onclick = () => this.renderCategory(c);
+          card.onclick = () => window.app.renderCategory(c);
           cc.appendChild(card);
+
+          // 💡 关键补丁：抓取刚生成的 span，强制截断点击冒泡
+          const tipEl = card.querySelector('.pinyin-tip-target');
+          if (tipEl) {
+            // 防止移入/点击时触发父级 category-card 的点击事件
+            tipEl.addEventListener('click', (e) => {
+              e.stopPropagation();
+            });
+            tipEl.addEventListener('mouseenter', (e) => {
+              e.stopPropagation();
+            });
+          }
         });
       }
     } catch (e) {
@@ -778,7 +942,59 @@ class HuaXiaApp {
       articles.forEach(a => {
         const card = document.createElement('div');
         card.className = 'article-item';
-        card.innerHTML = `<div class="icon">${a.icon || '📄'}</div><div><h3>${a.title}</h3></div>`;
+
+        // 1. 处理带有“骰”字的提示
+        let titleText = a.title || '';
+        let pinyinText = a.pinyin || '';
+        let tipAttr = '';
+
+        //if (a.title && a.title.includes('骰')) {
+        // 1. 如果标题包含“骰”字，仅精准替换“骰”字本身（或带拼音的“骰”字）
+        if (titleText.includes('骰')) {
+          const py = (a.pinyin || 'tóu').split(' ')[0];
+          //const tipText = '色子（读音：shǎi zi），又称骰子（读音：tóu zi），是一种用于麻将、桌面游戏乃至赌博的常见用具。';
+          // 💡 支持 \n 换行
+          const tipText = '色子（读音：shǎi zi）\n又称骰子（读音：tóu zi）\n常见于麻将、桌游等用具。';
+          // 加上 title 属性和高亮虚线样式
+          //tipAttr = `title="${tipText}" style="cursor: help !important; border-bottom: 2px dashed #e74c3c; display: inline-block;"`;
+          // 💡 关键：只给“骰”字加 title，其它字（数学乐园之...子）保持普通文本
+          //const tipSpan = `<span class="js-single-tip" title="${tipText}" style="cursor: help !important; border-bottom: 2px dashed #e74c3c; display: inline-block;">骰</span>`;
+          // 给“骰”字加上 data-tip 属性和类名
+          //const tipSpan = `<span class="pretty-tip" data-tip="${tipText}">骰</span>`;
+          // 💡 结构说明：内联 span + 骰字 + 精致的圆圈问号角标 <i class="tip-icon">?</i>
+          const tipSpan = `<span class="pretty-tip" data-tip="${tipText}">骰<i class="tip-icon">?</i></span>`;
+          titleText = titleText.replace('骰', tipSpan);
+        }
+
+        // 2. 拼接 HTML（直接把提示挂在带有 title 的包裹层上）
+        //if (tipAttr) {
+        //  card.innerHTML = `
+        //    <div class="icon">${a.icon || '📄'}</div>
+        //    <div style="position: relative;">
+        //      <span class="js-pinyin-tip" ${tipAttr}>
+        //        ${pinyinText ? `<div class="pinyin">${pinyinText}</div>` : ''}
+        //        <h3>${titleText}</h3>
+        //      </span>
+        //    </div>
+        //  `;
+        //} else {
+        //  card.innerHTML = `
+        //    <div class="icon">${a.icon || '📄'}</div>
+        //    <div style="position: relative;">
+        //      ${pinyinText ? `<div class="pinyin">${pinyinText}</div>` : ''}
+        //      <h3>${titleText}</h3>
+        //    </div>
+        //  `;
+        //}
+        
+        // 2. 渲染卡片 HTML（标题和拼音正常呈现）
+        card.innerHTML = `
+          <div class="icon">${a.icon || '📄'}</div>
+          <div style="position: relative;">
+            ${pinyinText ? `<div class="pinyin">${pinyinText}</div>` : ''}
+            <h3>${titleText}</h3>
+          </div>
+        `;
         //card.onclick = () => this.openArticle(cat.id, a.id);
         // ⭐ 如果 JSON 有 url → 跳外部网址
         if (a.url) {
@@ -802,6 +1018,14 @@ class HuaXiaApp {
         }
         
         list.appendChild(card);
+
+        // 4. 关键：阻止“骰”字区域的点击冒泡，避免直接触发卡片跳转导致系统 Tips 闪退
+        const tipEl = card.querySelector('.js-pinyin-tip');
+        if (tipEl) {
+          tipEl.onclick = (e) => {
+            e.stopPropagation(); // 阻止触发 card.onclick
+          };
+        }
       });
     } catch (e) { console.error('renderCategory:', e); }
   }
@@ -820,7 +1044,8 @@ class HuaXiaApp {
                      { id: 'shuxueleyuan', title: '数学乐园', url: 'https://maths3.github.io/', icon: '🎈 ' },
                      { id: 'ronghuiguantong', title: '融会贯通', url: 'https://always001.github.io/ronghuiguantong', icon: '🔵📐∑' },
                      { id: 'talent_0000', title: '天才基本法之入门级', url: 'https://maths3.github.io/talent_0000.html', icon: '🔗'},
-                     { id: 'math-practice_0002', title: '数学乐园之骰子', url: 'https://always001.github.io/math-practice_0002.html', icon: '🎲'},
+                     // 💡 在这里加上 pinyin 字段
+                     { id: 'math-practice_0002', title: '数学乐园之骰子', pinyin: 'tóu', url: 'https://always001.github.io/math-practice_0002.html', icon: '🎲'},
                      { id: 'math-practice_0003', title: '方格填数闯关', url: 'https://maths3.github.io/math-practice_0003.html', icon: '🧩'},
                      { id: 'math-practice_0004', title: '数学乐园·算24点', url: 'https://maths3.github.io/math-practice_0004.html', icon: '🎮'},
                      { id: 'talent', title: '天才基本法', url: 'https://always001.github.io/github.io/talent.html',icon: '🎓'}],
