@@ -85,7 +85,7 @@
 
 <div class="game-wrap">
   <div class="top">
-    <button class="back-btn" onclick="history.back()">← 返回</button>
+    <button class="back-btn" onclick="window.history.back()">← 返回</button>
     <h1>✏️ 田字格描红</h1>
     <span></span>
   </div>
@@ -139,7 +139,7 @@ const CHARS = [
 ];
 
 let current = CHARS[0];
-let history = [];
+let traceHistory = [];
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -198,7 +198,7 @@ function endDraw() {
   drawing = false;
   strokes++;
   // 保存当前画布到历史
-  history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+  traceHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
   if (strokes >= 3 && strokes % 3 === 0) {
     const praises = ['真棒！', '写得好！', '加油！', '一笔一划真认真！', '继续努力！'];
     speak(praises[Math.floor(Math.random() * praises.length)]);
@@ -215,15 +215,15 @@ canvas.addEventListener('touchend', endDraw);
 
 function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  history = [];
+  traceHistory = [];
   strokes = 0;
 }
 
 function undo() {
-  if (history.length === 0) return;
-  history.pop();
+  if (traceHistory.length === 0) return;
+  traceHistory.pop();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (history.length > 0) ctx.putImageData(history[history.length - 1], 0, 0);
+  if (traceHistory.length > 0) ctx.putImageData(traceHistory[traceHistory.length - 1], 0, 0);
 }
 
 function speakCurrent() { speak(current.hz); }
