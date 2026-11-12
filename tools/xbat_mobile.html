@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Excel一括自動更新ツール</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Excel更新工具">
+    
+    <!-- 你的专属 App 图标链接 -->
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/huaxia-tech/huaxia-tech.github.io/refs/heads/main/tools/images/xbat-icon.ico">
+
+    <!-- 引入 JSZip 和 SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f2f2f7;
+            margin: 0;
+            padding: 15px;
+            color: #1c1c1e;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h2 { font-size: 18px; color: #007aff; text-align: center; margin-top: 0; }
+        
+        .header-labels {
+            display: flex;
+            gap: 8px;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+            padding-left: 2px;
+        }
+        .rule-card {
+            background: #f9f9fbfb;
+            border: 1px solid #e5e5ea;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .rule-card.fixed { background: #E6F3FF; border-color: #b3d7ff; }
+        .rule-card.dynamic { background: #FFECEC; border-color: #ffc9c9; }
+
+        input, select {
+            padding: 8px;
+            border: 1px solid #c7c7cc;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .sheet-input { width: 22%; }
+        .cell-input { width: 25%; }
+        .val-input { width: 40%; }
+        .del-btn {
+            background: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 13px;
+            cursor: pointer;
+            width: 13%;
+        }
+
+        .btn-group { margin: 15px 0; }
+        .btn {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 100%;
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .btn-add { background-color: #34c759; }
+        .btn:active { opacity: 0.8; }
+
+        #log {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #3a3a3c;
+            background: #f1f1f6;
+            padding: 10px;
+            border-radius: 6px;
+            max-height: 220px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Excel一括自動更新ツール (文件夹批量版)</h2>
+
+    <!-- 标题行 -->
+    <div class="header-labels">
+        <span style="width: 22%;">シート番号</span>
+        <span style="width: 25%;">セル</span>
+        <span style="width: 40%;">新しい値</span>
+        <span style="width: 13%;"></span>
+    </div>
+
+    <!-- 固定规则行 -->
+    <div class="rule-card fixed">
+        <input type="number" class="sheet-input" id="fixSheet" placeholder="例: 1">
+        <input type="text" class="cell-input" id="fixCell" placeholder="例: A2">
+        <input type="text" class="val-input" id="fixVal" placeholder="新しい値 (固定)">
+        <button class="del-btn" onclick="clearFixed()">清空</button>
+    </div>
+
+    <!-- 动态规则容器 -->
+    <div id="dynamicContainer"></div>
+
+    <!-- 添加规则按钮 -->
+    <button class="btn btn-add" onclick="addDynamicRuleRow()">＋ ルールを追加</button>
+
+    <!-- 文件夹选择与执行按钮 -->
+    <div class="btn-group">
+        <button class="btn" onclick="runFolderUpdate()">📁 选择文件夹并批量执行更新</button>
+    </div>
+
+    <div id="log">状态：请添加规则并点击选择文件夹开始...</div>
+</div>
+
+<script>
+// 清空固定规则
+function clearFixed() {
+    document.getElementById('fixSheet').value = '';
+    document.getElementById('fixCell').value = '';
+    document.getElementById('fixVal').value = '';
+}
+
+// 动态添加规则行（支持无限添加）
+function addDynamicRuleRow() {
+    const container = document.getElementById('dynamicContainer');
+    const row = document.createElement('div');
+    row.className = 'rule-card dynamic';
+    row.innerHTML = `
+        <input type="number" class="sheet-input dyn-sheet" placeholder="例: 1">
+        <input type="text" class="cell-input dyn-cell" placeholder="例: B5">
+        <input type="text" class="val-input dyn-val" placeholder="新しい値">
+        <button class="del-btn" onclick="this.parentElement.remove()">削除</button>
+    `;
+    container.appendChild(row);
+}
+
+// 核心：选择文件夹并对里面的所有 xlsx 进行直接批量底层修改
+async function runFolderUpdate() {
+    const logDiv = document.getElementById('log');
+
+    // 检查浏览器是否支持文件夹选择 API (现代 Chrome / Edge / 部分移动端浏览器支持)
+    if (!window.showDirectoryPicker) {
+        alert("当前浏览器不支持直接选择文件夹，请使用最新版 Chrome 或在电脑端使用此页面！");
+        return;
+    }
+
+    // 1. 收集所有规则
+    let rules = [];
+    
+    // 收集固定规则
+    let fSheet = document.getElementById('fixSheet').value.trim();
+    let fCell = document.getElementById('fixCell').value.trim();
+    let fVal = document.getElementById('fixVal').value.trim();
+    if (fSheet && fCell && fVal) {
+        rules.push({ sheet: parseInt(fSheet), cell: fCell, value: fVal });
+    }
+
+    // 收集所有动态规则
+    const dynRows = document.querySelectorAll('#dynamicContainer .rule-card');
+    for (let row of dynRows) {
+        let s = row.querySelector('.dyn-sheet').value.trim();
+        let c = row.querySelector('.dyn-cell').value.trim();
+        let v = row.querySelector('.dyn-val').value.trim();
+        if (s && c && v) {
+            rules.push({ sheet: parseInt(s), cell: c, value: v });
+        }
+    }
+
+    if (rules.length === 0) {
+        alert("请至少填写一条有效的更新规则（固定规则或动态规则）！");
+        return;
+    }
+
+    try {
+        // 2. 弹窗让用户选择目标文件夹（全部改用 innerHTML）
+        const dirHandle = await window.showDirectoryPicker();
+        logDiv.innerHTML = "已获取文件夹权限，开始扫描...<br>";
+
+        let processedCount = 0;
+
+        // 3. 遍历文件夹中的文件
+        for await (const entry of dirHandle.values()) {
+            // 跳过锁定文件 (~$) 和非 .xlsx 文件
+            if (entry.kind === 'file' && entry.name.toLowerCase().endsWith('.xlsx') && !entry.name.startsWith('~$')) {
+                logDiv.innerHTML += `正在处理: ${entry.name}<br>`;
+
+                // 读取文件
+                const file = await entry.getFile();
+                const arrayBuffer = await file.arrayBuffer();
+
+                // 底层 XML 修改逻辑 (ZIP 展开)
+                let zip = new JSZip();
+                let zipContent = await zip.loadAsync(arrayBuffer);
+
+                let sharedStringsPath = "xl/sharedStrings.xml";
+                let sharedData = "";
+                if (zipContent.file(sharedStringsPath)) {
+                    sharedData = await zipContent.file(sharedStringsPath).async("text");
+                } else {
+                    sharedData = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="0" uniqueCount="0"></sst>';
+                }
+
+                let newIndexes = {};
+                for (let rule of rules) {
+                    let siCount = (sharedData.match(/<si>/g) || []).length;
+                    let insert = `<si><t>${rule.value}</t></si>`;
+                    sharedData = sharedData.replace("</sst>", insert + "</sst>");
+                    
+                    let sheetName = `sheet${rule.sheet}`;
+                    newIndexes[`${sheetName}_${rule.cell}`] = siCount;
+                }
+                zip.file(sharedStringsPath, sharedData);
+
+                // 更新对应的 worksheet XML
+                for (let rule of rules) {
+                    let sheetName = `sheet${rule.sheet}`;
+                    let sheetPath = `xl/worksheets/${sheetName}.xml`;
+                    
+                    if (zipContent.file(sheetPath)) {
+                        let sheetXml = await zipContent.file(sheetPath).async("text");
+                        let idx = newIndexes[`${sheetName}_${rule.cell}`];
+                        
+                        let pattern = new RegExp(`(<c[^>]*r="${rule.cell}"[^>]*>.*?<v>)(.*?)(</v>.*?</c>)`, "s");
+                        if (pattern.test(sheetXml)) {
+                            sheetXml = sheetXml.replace(pattern, `$1${idx}$3`);
+                            zip.file(sheetPath, sheetXml);
+                        }
+                    }
+                }
+
+                // 生成更新后的二进制数据
+                let updatedBlob = await zip.generateAsync({ type: "blob" });
+
+                // 原地直接写入/保存回原文件 (File System Access API 支持直接覆写)
+                const writable = await entry.createWritable();
+                await writable.write(updatedBlob);
+                await writable.close();
+
+                // 使用 innerHTML 并用 span 标签将“✔ 更新完了: ”包裹起来设置为绿色
+                logDiv.innerHTML += `<span style="color: green;">✔ 更新完了: </span>${entry.name}<br>`;
+                processedCount++;
+            }
+        }
+
+        logDiv.innerHTML += `<br>✨ 全部完成！共成功更新了 ${processedCount} 个 Excel 文件。`;
+        alert(`更新完了！成功处理了 ${processedCount} 个文件。`);
+
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            logDiv.innerHTML += `<br>错误: ${err.message}`;
+            alert("操作发生错误：" + err.message);
+        } else {
+            logDiv.innerHTML += "<br>已取消文件夹选择。";
+        }
+    }
+}
+</script>
+
+</body>
+</html>
