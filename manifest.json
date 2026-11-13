@@ -1,6 +1,7 @@
 {
   "name": "华夏小课堂",
   "short_name": "华夏小课堂",
+  "description": "(C) 2026 JianLin Software",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
